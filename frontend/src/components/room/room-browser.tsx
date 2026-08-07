@@ -1,0 +1,93 @@
+"use client";
+
+import { Search, ShieldX } from "lucide-react";
+import { useMemo, useState } from "react";
+import { RoomCard } from "@/components/room/room-card";
+import type { Room } from "@/types/room";
+
+type RoomBrowserProps = {
+  rooms: Room[];
+};
+
+const filters = ["Hamısı", "Hücum təhlükəsizliyi", "GRC"] as const;
+
+export function RoomBrowser({ rooms }: RoomBrowserProps) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<(typeof filters)[number]>("Hamısı");
+
+  const visibleRooms = useMemo(() => {
+    const normalizedQuery = query.trim().toLocaleLowerCase("az");
+
+    return rooms.filter((room) => {
+      const matchesFilter = filter === "Hamısı" || room.category === filter;
+      const matchesQuery =
+        normalizedQuery.length === 0 ||
+        [room.title, room.shortTitle, room.description, room.path, room.module]
+          .join(" ")
+          .toLocaleLowerCase("az")
+          .includes(normalizedQuery);
+
+      return matchesFilter && matchesQuery;
+    });
+  }, [filter, query, rooms]);
+
+  return (
+    <div>
+      <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-[#0c1116] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+        <div className="relative w-full sm:max-w-sm">
+          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[17px] -translate-y-1/2 text-slate-500" aria-hidden="true" />
+          <label htmlFor="room-search" className="sr-only">Room axtar</label>
+          <input
+            id="room-search"
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Mövzu və ya Room axtar..."
+            className="h-11 w-full rounded-xl border border-white/[0.08] bg-black/20 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-emerald-300/35 focus:ring-2 focus:ring-emerald-300/10"
+          />
+        </div>
+
+        <div className="flex gap-1 overflow-x-auto rounded-xl bg-black/20 p-1" role="group" aria-label="Room kateqoriyası">
+          {filters.map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setFilter(item)}
+              className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
+                filter === item
+                  ? "bg-white/[0.09] text-white shadow-sm"
+                  : "text-slate-500 hover:text-slate-300"
+              }`}
+              aria-pressed={filter === item}
+            >
+              {item}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mb-4 flex items-center justify-between text-xs text-slate-500" aria-live="polite">
+        <span>{visibleRooms.length} Room göstərilir</span>
+        <span>Məzmun səviyyəsinə görə sıralanıb</span>
+      </div>
+
+      {visibleRooms.length > 0 ? (
+        <div className="grid gap-5 md:grid-cols-2">
+          {visibleRooms.map((room) => (
+            <RoomCard key={room.slug} room={room} />
+          ))}
+        </div>
+      ) : (
+        <div className="grid min-h-72 place-items-center rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.015] p-8 text-center">
+          <div>
+            <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-white/[0.04] text-slate-500">
+              <ShieldX className="size-5" aria-hidden="true" />
+            </span>
+            <h2 className="mt-4 text-base font-semibold text-slate-200">Uyğun Room tapılmadı</h2>
+            <p className="mt-2 text-sm text-slate-500">Axtarış sözünü və ya filtri dəyişərək yenidən yoxla.</p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
