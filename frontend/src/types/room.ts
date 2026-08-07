@@ -38,7 +38,7 @@ export type Room = {
   points: number;
   progress: number;
   learners: number;
-  accent: "green" | "blue";
+  accent: "green" | "red";
   sourceFile: string;
   objectives: string[];
   tasks: RoomTask[];

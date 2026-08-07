@@ -68,7 +68,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
   }
 
   return (
-    <section className="border-t border-white/[0.06] bg-[#080c10]" aria-labelledby="lesson-heading">
+    <section className="border-t border-red-300/[0.08] bg-[#15181a]" aria-labelledby="lesson-heading">
       <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 lg:px-10 lg:py-10">
         <div className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -85,7 +85,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
               </div>
               <div className="h-1.5 overflow-hidden rounded-full bg-white/[0.07]">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400 transition-[width] duration-500"
+                  className="h-full rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-400 transition-[width] duration-500"
                   style={{ width: `${progress}%` }}
                 />
               </div>
@@ -96,8 +96,8 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
           </div>
         </div>
 
-        <div className="grid overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0c1116] shadow-[0_30px_100px_rgba(0,0,0,.18)] lg:grid-cols-[285px_minmax(0,1fr)]">
-          <aside className="border-b border-white/[0.07] bg-[#090e12] lg:border-r lg:border-b-0" aria-label="Room taskları">
+        <div className="grid overflow-hidden rounded-2xl border border-red-300/10 bg-[#1a1d20] shadow-[0_30px_100px_rgba(0,0,0,.16)] lg:grid-cols-[285px_minmax(0,1fr)]">
+          <aside className="border-b border-white/[0.07] bg-[#171a1d] lg:border-r lg:border-b-0" aria-label="Room taskları">
             <div className="border-b border-white/[0.07] p-5">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
@@ -207,13 +207,13 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
                 ))}
               </div>
 
-              <div className="mt-10 rounded-2xl border border-sky-300/15 bg-sky-300/[0.04] p-5 sm:p-6">
+              <div className="mt-10 rounded-2xl border border-red-300/15 bg-red-300/[0.035] p-5 transition-all duration-300 hover:border-red-300/25 hover:bg-red-300/[0.05] sm:p-6">
                 <div className="flex items-start gap-3">
-                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-sky-300/10 text-sky-300">
+                  <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-red-300/10 text-red-300">
                     <Lightbulb className="size-[18px]" aria-hidden="true" />
                   </span>
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-sky-300">Bilik yoxlaması</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-red-300">Bilik yoxlaması</p>
                     <h4 className="mt-2 text-base font-semibold leading-6 text-slate-100 sm:text-lg">
                       {currentTask.question.prompt}
                     </h4>
@@ -239,7 +239,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
                             : showWrong
                               ? "border-rose-300/30 bg-rose-300/[0.07] text-rose-100"
                               : selected
-                                ? "border-sky-300/30 bg-sky-300/[0.07] text-slate-100"
+                                ? "border-red-300/30 bg-red-300/[0.07] text-slate-100"
                                 : "border-white/[0.07] bg-black/15 text-slate-400 hover:border-white/[0.14] hover:bg-white/[0.035] hover:text-slate-200"
                         }`}
                       >

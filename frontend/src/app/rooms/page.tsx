@@ -16,7 +16,7 @@ export default function RoomsPage() {
         <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.12]" />
         <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 sm:py-16 lg:px-10">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-300/15 bg-sky-300/[0.06] px-3 py-1.5 text-xs font-semibold text-sky-200">
+            <div className="inline-flex items-center gap-2 rounded-full border border-red-300/15 bg-red-300/[0.06] px-3 py-1.5 text-xs font-semibold text-red-200">
               <Sparkles className="size-3.5" aria-hidden="true" />
               Təlim kitabxanası
             </div>
@@ -29,7 +29,7 @@ export default function RoomsPage() {
           <div className="mt-9 grid max-w-2xl gap-3 sm:grid-cols-3">
             {[
               { label: "Aktiv Room", value: "02", icon: Layers3, tone: "text-emerald-300" },
-              { label: "Praktiki task", value: "10", icon: BookOpenCheck, tone: "text-sky-300" },
+              { label: "Praktiki task", value: "10", icon: BookOpenCheck, tone: "text-red-300" },
               { label: "Qazanılan XP", value: "1,150", icon: ShieldCheck, tone: "text-violet-300" },
             ].map((item) => {
               const Icon = item.icon;

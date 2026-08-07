@@ -1,11 +1,11 @@
 type ProgressRingProps = {
   value: number;
   size?: number;
-  accent?: "green" | "blue";
+  accent?: "green" | "red";
 };
 
 export function ProgressRing({ value, size = 48, accent = "green" }: ProgressRingProps) {
-  const color = accent === "green" ? "#34d399" : "#38bdf8";
+  const color = accent === "green" ? "#34d399" : "#f87171";
 
   return (
     <div
@@ -18,7 +18,7 @@ export function ProgressRing({ value, size = 48, accent = "green" }: ProgressRin
       role="img"
       aria-label={`${value}% tamamlanıb`}
     >
-      <div className="absolute inset-[4px] rounded-full bg-[#0d1217]" />
+      <div className="absolute inset-[4px] rounded-full bg-[#1a1d1f]" />
       <span className="relative text-[11px] font-bold text-white">{value}%</span>
     </div>
   );

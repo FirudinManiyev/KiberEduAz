@@ -197,7 +197,7 @@ export const rooms: Room[] = [
     points: 650,
     progress: 0,
     learners: 96,
-    accent: "blue",
+    accent: "red",
     sourceFile: "Introduction_to_GRC_Detailed.md",
     objectives: [
       "Governance, Risk və Compliance anlayışlarını izah etmək",

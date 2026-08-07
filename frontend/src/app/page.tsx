@@ -1,197 +1,116 @@
 import Link from "next/link";
 import {
+  Activity,
   ArrowRight,
   Award,
+  Bell,
   BookOpenCheck,
   CheckCircle2,
   ChevronRight,
+  CircleDot,
   Clock3,
   Flame,
-  GraduationCap,
-  LockKeyhole,
+  Gauge,
+  Map,
+  Radar,
   ShieldCheck,
-  Sparkles,
   Target,
-  Terminal,
   Trophy,
+  UserRound,
   Zap,
 } from "lucide-react";
+import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
+import { CommandConsole } from "@/components/home/command-console";
 import { RoomCard } from "@/components/room/room-card";
-import { ProgressRing } from "@/components/ui/progress-ring";
 import { rooms } from "@/data/rooms";
 
 const stats = [
-  {
-    label: "Toplanan xal",
-    value: "1,240",
-    note: "+240 bu həftə",
-    icon: Zap,
-    tone: "green",
-  },
-  {
-    label: "Tamamlanan task",
-    value: "8 / 10",
-    note: "80% irəliləyiş",
-    icon: CheckCircle2,
-    tone: "blue",
-  },
-  {
-    label: "Öyrənmə seriyası",
-    value: "7 gün",
-    note: "Şəxsi rekord: 12",
-    icon: Flame,
-    tone: "amber",
-  },
-  {
-    label: "Sinif sıralaması",
-    value: "#4",
-    note: "24 şagird arasında",
-    icon: Trophy,
-    tone: "violet",
-  },
+  { label: "Toplanan xal", value: "1,240", delta: "+240", icon: Zap, tone: "green", fill: 62 },
+  { label: "Task dəqiqliyi", value: "87%", delta: "+6%", icon: Target, tone: "red", fill: 87 },
+  { label: "Aktiv seriya", value: "7 gün", delta: "rekord 12", icon: Flame, tone: "amber", fill: 58 },
+  { label: "Sinif sırası", value: "#4", delta: "24 nəfər", icon: Trophy, tone: "green", fill: 76 },
 ];
 
 const leaderboard = [
   { rank: 1, name: "Murad Ə.", points: 2840, initials: "MƏ", tone: "emerald" },
-  { rank: 2, name: "Ləman H.", points: 2610, initials: "LH", tone: "sky" },
+  { rank: 2, name: "Ləman H.", points: 2610, initials: "LH", tone: "red" },
   { rank: 3, name: "Tural M.", points: 2380, initials: "TM", tone: "violet" },
-  { rank: 4, name: "Aylin N.", points: 1240, initials: "AN", tone: "cyan", current: true },
+  { rank: 4, name: "Aylin N.", points: 1240, initials: "AN", tone: "dark", current: true },
+];
+
+const quickLinks = [
+  { href: "/roadmap", label: "Roadmap", text: "Növbəti bacarıq mərhələni gör", icon: Map, tone: "green" },
+  { href: "/notifications", label: "Bildirişlər", text: "3 yeni yeniləmən var", icon: Bell, tone: "red" },
+  { href: "/profile", label: "Profil", text: "Hədəflərini və profilini yenilə", icon: UserRound, tone: "neutral" },
 ];
 
 export default function Home() {
-  const activeRoom = rooms[0];
-
   return (
     <main className="flex-1 overflow-hidden">
+      <div className="threat-ticker border-b border-white/[0.055] bg-black/30">
+        <div className="threat-ticker__track">
+          {[0, 1].map((copy) => (
+            <div key={copy} className="flex shrink-0 items-center gap-10 pr-10">
+              <span><i className="bg-emerald-400" /> PLATFORM STATUS: ONLINE</span>
+              <span><i className="bg-red-400" /> GÜNÜN MİSSİYASI: LOG ANALİZİ</span>
+              <span><i className="bg-emerald-400" /> 148 ÖYRƏNƏN AKTİVDİR</span>
+              <span><i className="bg-red-400" /> YENİ ROOM: GRC ƏSASLARI</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <section className="relative border-b border-white/[0.06]">
         <div className="hero-glow absolute inset-0 -z-10" />
-        <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.16]" />
-        <div className="mx-auto grid max-w-[1440px] gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-10 lg:py-20">
+        <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.14]" />
+        <div className="hero-scan" />
+        <div className="mx-auto grid max-w-[1440px] gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:px-10 lg:py-20">
           <div className="max-w-2xl">
-            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/15 bg-emerald-300/[0.06] px-3 py-1.5 text-xs font-semibold text-emerald-200">
-              <Sparkles className="size-3.5" aria-hidden="true" />
-              Kiber bacarıqların üçün missiya mərkəzi
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-red-300/15 bg-red-300/[0.055] px-3 py-1.5 text-[11px] font-semibold text-red-200 shadow-[0_0_30px_rgba(239,68,68,.06)]">
+              <Radar className="size-3.5 animate-pulse" aria-hidden="true" />
+              Təhlükəni görməyi öyrən
             </div>
-            <h1 className="text-balance text-4xl font-semibold leading-[1.08] tracking-[-0.055em] text-white sm:text-5xl lg:text-[64px]">
-              Öyrən. Sına. <span className="text-gradient">Müdafiə et.</span>
+            <h1 className="text-balance text-4xl font-semibold leading-[1.04] tracking-[-0.06em] text-white sm:text-5xl lg:text-[67px]">
+              Kiber dünyanı<br />
+              <span className="text-gradient">missiyalarla fəth et.</span>
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-slate-400 sm:text-lg sm:leading-8">
-              Kibertəhlükəsizliyi quru nəzəriyyə ilə deyil, real ssenarilər və addım-addım tasklarla öyrən. Hər cavab səni növbəti səviyyəyə aparır.
+            <p className="mt-6 max-w-xl text-base leading-7 text-slate-400 sm:text-lg sm:leading-8">
+              Oxu, real ssenarini analiz et, cavabını yoxla və xal qazan. KiberEduAz məktəb və kollec tələbələri üçün qurulmuş təhlükəsiz praktika mərkəzidir.
             </p>
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link
-                href={`/rooms/${activeRoom.slug}`}
-                className="group inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 text-sm font-bold text-[#06100c] shadow-[0_10px_35px_rgba(52,211,153,0.18)] transition-all hover:-translate-y-0.5 hover:bg-emerald-300 hover:shadow-[0_14px_42px_rgba(52,211,153,0.24)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-[#070a0d]"
-              >
-                Room-a davam et
-                <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+              <Link href={`/rooms/${rooms[0].slug}`} prefetch className="primary-action group">
+                <span className="relative z-10">Missiyaya davam et</span>
+                <span className="relative z-10 flex items-center gap-2"><LinkLoadingIndicator /><ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
+                <span className="button-sheen" />
               </Link>
-              <Link
-                href="/rooms"
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-white/[0.1] bg-white/[0.035] px-5 text-sm font-semibold text-white transition-all hover:border-white/[0.2] hover:bg-white/[0.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400"
-              >
-                Bütün Room-lar
-                <ChevronRight className="size-4" aria-hidden="true" />
+              <Link href="/roadmap" prefetch className="secondary-action group">
+                Təlim xəritəsini aç
+                <span className="flex items-center gap-2"><LinkLoadingIndicator /><ChevronRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
               </Link>
             </div>
 
-            <div className="mt-9 flex flex-wrap items-center gap-x-6 gap-y-3 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-2">
-                <ShieldCheck className="size-4 text-emerald-400" aria-hidden="true" />
-                Təhlükəsiz ssenarilər
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <BookOpenCheck className="size-4 text-sky-400" aria-hidden="true" />
-                Nəzəriyyə + praktika
-              </span>
-              <span className="inline-flex items-center gap-2">
-                <Award className="size-4 text-violet-400" aria-hidden="true" />
-                Xal və nailiyyətlər
-              </span>
+            <div className="mt-9 grid max-w-xl grid-cols-3 gap-2 sm:gap-3">
+              {[
+                { value: "02", label: "Canlı Room", icon: BookOpenCheck },
+                { value: "10", label: "Praktiki task", icon: CheckCircle2 },
+                { value: "1.1K", label: "Mümkün XP", icon: Award },
+              ].map((item) => {
+                const Icon = item.icon;
+                return (
+                  <div key={item.label} className="hero-mini-stat group">
+                    <Icon className="size-4 text-emerald-400 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" />
+                    <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
+                    <p className="mt-0.5 text-[10px] text-slate-600">{item.label}</p>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[590px] lg:mr-0">
-            <div className="absolute -inset-10 -z-10 rounded-full bg-emerald-400/[0.04] blur-3xl" />
-            <div className="overflow-hidden rounded-2xl border border-white/[0.1] bg-[#0a0f13]/90 shadow-[0_30px_100px_rgba(0,0,0,.35)] backdrop-blur">
-              <div className="flex items-center justify-between border-b border-white/[0.07] bg-white/[0.025] px-4 py-3">
-                <div className="flex items-center gap-1.5" aria-hidden="true">
-                  <span className="size-2.5 rounded-full bg-rose-400/70" />
-                  <span className="size-2.5 rounded-full bg-amber-300/70" />
-                  <span className="size-2.5 rounded-full bg-emerald-300/70" />
-                </div>
-                <div className="flex items-center gap-2 text-[10px] font-medium uppercase tracking-[0.14em] text-slate-500">
-                  <Terminal className="size-3.5" aria-hidden="true" />
-                  learning_session.exe
-                </div>
-              </div>
-
-              <div className="relative p-5 sm:p-7">
-                <div className="mb-6 flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-mono text-[11px] text-emerald-400">$ current_mission</p>
-                    <h2 className="mt-2 text-xl font-semibold text-white sm:text-2xl">{activeRoom.title}</h2>
-                    <p className="mt-1 text-sm text-slate-500">Task 2 · Oxşar anlayışlar</p>
-                  </div>
-                  <ProgressRing value={activeRoom.progress} size={58} />
-                </div>
-
-                <div className="space-y-2.5">
-                  {[
-                    { label: "Pentestinq nədir?", status: "done" },
-                    { label: "Oxşar anlayışlar", status: "active" },
-                    { label: "Black, White və Grey Box", status: "next" },
-                    { label: "Metodologiya", status: "locked" },
-                  ].map((task, index) => (
-                    <div
-                      key={task.label}
-                      className={`flex items-center gap-3 rounded-xl border px-3.5 py-3 transition-colors ${
-                        task.status === "active"
-                          ? "border-emerald-300/20 bg-emerald-300/[0.07]"
-                          : "border-white/[0.055] bg-white/[0.018]"
-                      }`}
-                    >
-                      <span
-                        className={`grid size-7 shrink-0 place-items-center rounded-lg text-[11px] font-bold ${
-                          task.status === "done"
-                            ? "bg-emerald-400 text-emerald-950"
-                            : task.status === "active"
-                              ? "border border-emerald-300/25 bg-emerald-300/10 text-emerald-300"
-                              : "border border-white/[0.08] bg-white/[0.03] text-slate-500"
-                        }`}
-                      >
-                        {task.status === "done" ? (
-                          <CheckCircle2 className="size-4" aria-hidden="true" />
-                        ) : task.status === "locked" ? (
-                          <LockKeyhole className="size-3.5" aria-hidden="true" />
-                        ) : (
-                          String(index + 1).padStart(2, "0")
-                        )}
-                      </span>
-                      <span className={`flex-1 text-sm ${task.status === "active" ? "font-medium text-slate-100" : "text-slate-400"}`}>
-                        {task.label}
-                      </span>
-                      {task.status === "active" && (
-                        <span className="size-1.5 animate-pulse rounded-full bg-emerald-400 shadow-[0_0_10px_#34d399]" />
-                      )}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-6 flex items-center justify-between rounded-xl border border-sky-300/10 bg-sky-300/[0.045] px-4 py-3">
-                  <div className="flex items-center gap-3">
-                    <div className="grid size-9 place-items-center rounded-lg bg-sky-300/10 text-sky-300">
-                      <Target className="size-4" aria-hidden="true" />
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold text-slate-200">Növbəti mükafat</p>
-                      <p className="text-[11px] text-slate-500">Taskı bitir · +100 XP</p>
-                    </div>
-                  </div>
-                  <span className="font-mono text-xs font-bold text-sky-300">100 XP</span>
-                </div>
-              </div>
-            </div>
+          <div className="relative mx-auto w-full max-w-[610px] lg:mr-0">
+            <div className="absolute -inset-12 -z-10 rounded-full bg-red-500/[0.045] blur-3xl" />
+            <CommandConsole />
           </div>
         </div>
       </section>
@@ -200,28 +119,45 @@ export default function Home() {
         <section aria-labelledby="overview-heading">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="section-kicker">Sənin vəziyyətin</p>
-              <h2 id="overview-heading" className="section-title">Bu həftənin icmalı</h2>
+              <p className="section-kicker">Canlı göstəricilər</p>
+              <h2 id="overview-heading" className="section-title">Komanda mərkəzin</h2>
             </div>
-            <p className="text-sm text-slate-500">Son yenilənmə: bu gün, 14:20</p>
+            <div className="flex items-center gap-2 text-[11px] text-slate-600"><Activity className="size-3.5 text-emerald-400" /><span>İndi yeniləndi</span></div>
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
-                <article key={stat.label} className="group rounded-2xl border border-white/[0.07] bg-[#0c1116] p-5 transition-all duration-300 hover:border-white/[0.13] hover:bg-[#0f151b]">
-                  <div className="flex items-start justify-between">
+                <article key={stat.label} className="metric-card group">
+                  <div className="metric-card__noise" />
+                  <div className="relative flex items-start justify-between">
                     <div>
                       <p className="text-xs font-medium text-slate-500">{stat.label}</p>
                       <p className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white">{stat.value}</p>
                     </div>
-                    <span className={`stat-icon stat-icon--${stat.tone}`}>
-                      <Icon className="size-[18px]" aria-hidden="true" />
-                    </span>
+                    <span className={`stat-icon stat-icon--${stat.tone}`}><Icon className="size-[18px]" /></span>
                   </div>
-                  <p className="mt-4 text-[11px] font-medium text-slate-500">{stat.note}</p>
+                  <div className="relative mt-5">
+                    <div className="flex items-center justify-between text-[10px]"><span className="font-medium text-emerald-400">{stat.delta}</span><span className="text-slate-700">həftəlik</span></div>
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/[0.055]"><div className={`metric-fill metric-fill--${stat.tone}`} style={{ width: `${stat.fill}%` }} /></div>
+                  </div>
                 </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="pt-8" aria-label="Sürətli keçidlər">
+          <div className="grid gap-3 md:grid-cols-3">
+            {quickLinks.map((item) => {
+              const Icon = item.icon;
+              return (
+                <Link key={item.href} href={item.href} prefetch className={`quick-link quick-link--${item.tone} group`}>
+                  <span className="quick-link__icon"><Icon className="size-5 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110" /></span>
+                  <span className="min-w-0 flex-1"><span className="block text-sm font-semibold text-slate-100">{item.label}</span><span className="mt-1 block truncate text-[11px] text-slate-600">{item.text}</span></span>
+                  <span className="flex items-center gap-2"><LinkLoadingIndicator /><ArrowRight className="size-4 text-slate-600 transition-all group-hover:translate-x-1 group-hover:text-white" /></span>
+                </Link>
               );
             })}
           </div>
@@ -229,121 +165,65 @@ export default function Home() {
 
         <section className="pt-16" aria-labelledby="rooms-heading">
           <div className="mb-7 flex items-end justify-between gap-4">
-            <div>
-              <p className="section-kicker">Aktiv təlimlər</p>
-              <h2 id="rooms-heading" className="section-title">Room-larını davam etdir</h2>
-            </div>
-            <Link href="/rooms" className="group hidden items-center gap-1.5 text-sm font-semibold text-slate-400 transition-colors hover:text-emerald-300 sm:flex">
-              Hamısına bax
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-            </Link>
+            <div><p className="section-kicker">Aktiv missiyalar</p><h2 id="rooms-heading" className="section-title">Room-larını davam etdir</h2></div>
+            <Link href="/rooms" prefetch className="group hidden items-center gap-2 text-sm font-semibold text-slate-500 transition-colors hover:text-emerald-300 sm:flex">Hamısına bax <LinkLoadingIndicator /><ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></Link>
           </div>
-          <div className="grid gap-5 md:grid-cols-2">
-            {rooms.map((room) => (
-              <RoomCard key={room.slug} room={room} featured />
-            ))}
-          </div>
+          <div className="grid gap-5 md:grid-cols-2">{rooms.map((room) => <RoomCard key={room.slug} room={room} featured />)}</div>
         </section>
 
-        <section id="learning-path" className="scroll-mt-28 pt-16" aria-labelledby="path-heading">
-          <div className="mb-7">
-            <p className="section-kicker">Strukturlaşdırılmış inkişaf</p>
-            <h2 id="path-heading" className="section-title">Sənin təlim xəritən</h2>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0b1015]">
-            <div className="grid lg:grid-cols-[300px_1fr]">
-              <div className="relative overflow-hidden border-b border-white/[0.07] p-6 sm:p-8 lg:border-r lg:border-b-0">
-                <div className="cyber-grid absolute inset-0 opacity-[0.14]" />
-                <div className="relative">
-                  <div className="grid size-12 place-items-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10 text-emerald-300">
-                    <GraduationCap className="size-6" aria-hidden="true" />
-                  </div>
-                  <h3 className="mt-5 text-xl font-semibold text-white">Kiber başlanğıc</h3>
-                  <p className="mt-2 text-sm leading-6 text-slate-500">Texniki və idarəetmə təməlini paralel qur.</p>
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500">Ümumi progress</span>
-                      <span className="font-semibold text-emerald-300">16%</span>
-                    </div>
-                    <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]">
-                      <div className="h-full w-[16%] rounded-full bg-gradient-to-r from-emerald-500 to-cyan-400" />
-                    </div>
-                  </div>
-                </div>
+        <section className="pt-16" aria-labelledby="progress-heading">
+          <div className="grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
+            <div className="overflow-hidden rounded-2xl border border-red-300/10 bg-[#1a1d1f]">
+              <div className="flex items-center justify-between border-b border-white/[0.065] px-5 py-5 sm:px-6">
+                <div><p className="section-kicker">Təlim yolu</p><h2 id="progress-heading" className="mt-1 text-xl font-semibold tracking-[-0.03em] text-white">Kiber başlanğıc</h2></div>
+                <Link href="/roadmap" prefetch className="grid size-10 place-items-center rounded-xl border border-white/[0.08] text-slate-500 transition-all hover:rotate-3 hover:border-emerald-300/20 hover:bg-emerald-300/[0.06] hover:text-emerald-300" aria-label="Roadmap-a keç"><Map className="size-4" /></Link>
               </div>
-
-              <div className="p-5 sm:p-8">
-                <div className="relative grid gap-4 md:grid-cols-2">
-                  <div className="path-line absolute left-[calc(25%-2px)] right-[calc(25%-2px)] top-7 hidden h-px md:block" />
+              <div className="relative p-5 sm:p-7">
+                <div className="road-line absolute bottom-[69px] left-12 top-[65px] w-px sm:left-[53px]" />
+                <div className="space-y-4">
                   {rooms.map((room, index) => (
-                    <Link
-                      key={room.slug}
-                      href={`/rooms/${room.slug}`}
-                      className="group relative rounded-2xl border border-white/[0.07] bg-white/[0.025] p-5 transition-all hover:-translate-y-0.5 hover:border-white/[0.14] hover:bg-white/[0.04]"
-                    >
-                      <div className="relative z-10 flex items-center justify-between">
-                        <span className={`grid size-14 place-items-center rounded-2xl border text-sm font-bold ${room.accent === "green" ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-300" : "border-sky-300/25 bg-sky-300/10 text-sky-300"}`}>
-                          0{index + 1}
-                        </span>
-                        <span className="rounded-full border border-white/[0.07] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                          {room.progress > 0 ? "Davam edir" : "Hazırdır"}
-                        </span>
-                      </div>
-                      <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-500">{room.module}</p>
-                      <h4 className="mt-1 text-base font-semibold text-slate-100 transition-colors group-hover:text-white">{room.title}</h4>
-                      <div className="mt-4 flex items-center justify-between border-t border-white/[0.055] pt-4 text-xs text-slate-500">
-                        <span className="inline-flex items-center gap-1.5"><Clock3 className="size-3.5" />{room.duration}</span>
-                        <span className={room.accent === "green" ? "text-emerald-300" : "text-sky-300"}>{room.points} XP</span>
-                      </div>
+                    <Link key={room.slug} href={`/rooms/${room.slug}`} prefetch className="road-node group relative flex items-center gap-4 rounded-xl border border-white/[0.065] bg-white/[0.02] p-4 transition-all hover:translate-x-1 hover:border-white/[0.13] hover:bg-white/[0.04]">
+                      <span className={`relative z-10 grid size-11 shrink-0 place-items-center rounded-xl border text-xs font-bold ${index === 0 ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-300" : "border-red-300/25 bg-red-300/10 text-red-300"}`}>0{index + 1}</span>
+                      <span className="min-w-0 flex-1"><span className="block text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">{room.module}</span><span className="mt-1 block truncate text-sm font-semibold text-slate-200">{room.title}</span></span>
+                      <span className="hidden items-center gap-1.5 text-[10px] text-slate-600 sm:flex"><Clock3 className="size-3" />{room.duration}</span>
+                      <ChevronRight className="size-4 text-slate-700 transition-all group-hover:translate-x-1 group-hover:text-white" />
                     </Link>
                   ))}
+                  <div className="relative flex items-center gap-4 rounded-xl border border-dashed border-white/[0.07] p-4 opacity-60">
+                    <span className="relative z-10 grid size-11 shrink-0 place-items-center rounded-xl border border-white/[0.08] bg-[#1a1d1f] text-slate-600"><CircleDot className="size-4" /></span>
+                    <span><span className="block text-[10px] uppercase tracking-[0.13em] text-slate-700">Növbəti mərhələ</span><span className="mt-1 block text-sm font-medium text-slate-500">Şəbəkə müdafiəsi · tezliklə</span></span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </section>
 
-        <section id="leaderboard" className="scroll-mt-28 pt-16" aria-labelledby="leaderboard-heading">
-          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <div className="overflow-hidden rounded-2xl border border-white/[0.07] bg-[#0c1116]">
+            <div className="overflow-hidden rounded-2xl border border-red-300/10 bg-[#1a1d1f]">
               <div className="flex items-center justify-between border-b border-white/[0.065] px-5 py-5 sm:px-6">
-                <div>
-                  <p className="section-kicker">11A sinfi</p>
-                  <h2 id="leaderboard-heading" className="mt-1 text-xl font-semibold tracking-[-0.03em] text-white">Həftəlik reytinq</h2>
-                </div>
-                <Trophy className="size-5 text-amber-300" aria-hidden="true" />
+                <div><p className="section-kicker section-kicker--red">11A sinfi</p><h2 className="mt-1 text-xl font-semibold tracking-[-0.03em] text-white">Həftəlik reytinq</h2></div>
+                <Trophy className="size-5 text-red-400" />
               </div>
               <div className="divide-y divide-white/[0.055]">
                 {leaderboard.map((person) => (
-                  <div key={person.rank} className={`flex items-center gap-4 px-5 py-4 sm:px-6 ${person.current ? "bg-emerald-300/[0.045]" : "hover:bg-white/[0.02]"}`}>
-                    <span className={`w-5 text-center text-sm font-bold ${person.rank <= 3 ? "text-amber-300" : "text-slate-500"}`}>{person.rank}</span>
+                  <div key={person.rank} className={`leader-row flex items-center gap-3 px-5 py-4 sm:px-6 ${person.current ? "bg-emerald-300/[0.045]" : ""}`}>
+                    <span className={`w-5 text-center text-sm font-bold ${person.rank <= 3 ? "text-red-300" : "text-slate-600"}`}>{person.rank}</span>
                     <span className={`avatar avatar--${person.tone}`}>{person.initials}</span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-200">{person.name} {person.current && <span className="ml-1 text-[10px] font-medium text-emerald-400">Sən</span>}</p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">Kiber başlanğıc yolu</p>
-                    </div>
-                    <span className="font-mono text-xs font-semibold text-slate-300">{person.points.toLocaleString("az-AZ")} XP</span>
+                    <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-200">{person.name} {person.current && <span className="ml-1 text-[9px] font-medium text-emerald-400">SƏN</span>}</p><p className="mt-0.5 text-[10px] text-slate-600">Kiber başlanğıc</p></div>
+                    <span className="font-mono text-[11px] font-semibold text-slate-400">{person.points.toLocaleString("az-AZ")} XP</span>
                   </div>
                 ))}
               </div>
+              <div className="border-t border-white/[0.06] p-4"><div className="flex items-center gap-3 rounded-xl border border-red-300/10 bg-red-300/[0.04] p-3"><Gauge className="size-4 text-red-400" /><p className="flex-1 text-[11px] text-slate-500">3-cü yerə çatmaq üçün <span className="font-semibold text-slate-300">1,140 XP</span> lazımdır.</p></div></div>
             </div>
+          </div>
+        </section>
 
-            <aside className="relative overflow-hidden rounded-2xl border border-violet-300/10 bg-[#0d1118] p-6">
-              <div className="absolute -right-16 -top-16 size-44 rounded-full bg-violet-500/10 blur-3xl" />
-              <div className="relative">
-                <span className="grid size-12 place-items-center rounded-2xl border border-violet-300/20 bg-violet-300/10 text-violet-300">
-                  <Award className="size-6" aria-hidden="true" />
-                </span>
-                <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-violet-300">Növbəti rütbə</p>
-                <h3 className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-white">Bacarıqlı</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-500">Daha 760 XP topla və yeni rütbəni aç.</p>
-                <div className="mt-6">
-                  <div className="flex justify-between text-xs text-slate-500"><span>1,240 XP</span><span>2,000 XP</span></div>
-                  <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-[62%] rounded-full bg-gradient-to-r from-violet-500 to-sky-400" /></div>
-                </div>
-              </div>
-            </aside>
+        <section className="pt-16">
+          <div className="achievement-banner group relative overflow-hidden rounded-2xl border border-emerald-300/10 p-6 sm:p-8">
+            <div className="cyber-grid absolute inset-0 opacity-[0.12]" />
+            <div className="relative flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4"><span className="grid size-12 shrink-0 place-items-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10 text-emerald-300 transition-transform duration-500 group-hover:-rotate-6 group-hover:scale-110"><ShieldCheck className="size-6" /></span><div><p className="text-xs font-semibold uppercase tracking-[0.14em] text-emerald-400">Növbəti nailiyyət</p><h2 className="mt-1 text-xl font-semibold text-white">Etik Tədqiqatçı nişanı</h2><p className="mt-2 text-sm text-slate-500">Pentestinq Room-unun bütün tasklarını tamamla.</p></div></div>
+              <Link href={`/rooms/${rooms[0].slug}`} prefetch className="secondary-action group/link shrink-0">Davam et <span className="flex items-center gap-2"><LinkLoadingIndicator /><ArrowRight className="size-4 transition-transform group-hover/link:translate-x-1" /></span></Link>
+            </div>
           </div>
         </section>
       </div>

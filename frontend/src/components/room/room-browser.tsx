@@ -33,7 +33,7 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
 
   return (
     <div>
-      <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-white/[0.07] bg-[#0c1116] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+      <div className="mb-8 flex flex-col gap-4 rounded-2xl border border-red-300/10 bg-[#1a1d20] p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
         <div className="relative w-full sm:max-w-sm">
           <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[17px] -translate-y-1/2 text-slate-500" aria-hidden="true" />
           <label htmlFor="room-search" className="sr-only">Room axtar</label>

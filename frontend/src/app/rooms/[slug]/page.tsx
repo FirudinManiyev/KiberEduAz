@@ -45,7 +45,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
   return (
     <main className="flex-1">
       <section className="relative overflow-hidden">
-        <div className={`absolute inset-0 -z-10 ${isGreen ? "room-glow-green" : "room-glow-blue"}`} />
+        <div className={`absolute inset-0 -z-10 ${isGreen ? "room-glow-green" : "room-glow-red"}`} />
         <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.13]" />
         <div className="mx-auto max-w-[1440px] px-4 py-8 sm:px-6 sm:py-11 lg:px-10 lg:py-14">
           <Link href="/rooms" className="group inline-flex items-center gap-2 text-xs font-semibold text-slate-500 transition-colors hover:text-white">
@@ -56,7 +56,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
           <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px] lg:items-start">
             <div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.13em] ${isGreen ? "border-emerald-300/20 bg-emerald-300/[0.08] text-emerald-300" : "border-sky-300/20 bg-sky-300/[0.08] text-sky-300"}`}>
+                <span className={`rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-[0.13em] ${isGreen ? "border-emerald-300/20 bg-emerald-300/[0.08] text-emerald-300" : "border-red-300/20 bg-red-300/[0.08] text-red-300"}`}>
                   {room.type}
                 </span>
                 <span className="rounded-full border border-white/[0.08] bg-white/[0.03] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-400">
@@ -64,7 +64,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
                 </span>
               </div>
 
-              <p className={`mt-5 text-xs font-semibold uppercase tracking-[0.16em] ${isGreen ? "text-emerald-400" : "text-sky-400"}`}>
+              <p className={`mt-5 text-xs font-semibold uppercase tracking-[0.16em] ${isGreen ? "text-emerald-400" : "text-red-400"}`}>
                 {room.eyebrow}
               </p>
               <h1 className="mt-2 max-w-3xl text-4xl font-semibold tracking-[-0.055em] text-white sm:text-5xl lg:text-[56px]">
@@ -78,18 +78,18 @@ export default async function RoomPage({ params }: RoomPageProps) {
                 <span className="inline-flex items-center gap-2"><Clock3 className="size-4" aria-hidden="true" />{room.duration}</span>
                 <span className="inline-flex items-center gap-2"><BookOpenCheck className="size-4" aria-hidden="true" />{room.tasks.length} task</span>
                 <span className="inline-flex items-center gap-2"><Users className="size-4" aria-hidden="true" />{room.learners} öyrənən</span>
-                <span className={`inline-flex items-center gap-2 font-semibold ${isGreen ? "text-emerald-300" : "text-sky-300"}`}><Zap className="size-4" aria-hidden="true" />{room.points} XP</span>
+                <span className={`inline-flex items-center gap-2 font-semibold ${isGreen ? "text-emerald-300" : "text-red-300"}`}><Zap className="size-4" aria-hidden="true" />{room.points} XP</span>
               </div>
             </div>
 
-            <aside className="rounded-2xl border border-white/[0.08] bg-[#0c1116]/90 p-5 shadow-2xl backdrop-blur sm:p-6">
+            <aside className="rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 p-5 shadow-2xl backdrop-blur sm:p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Path / Module</p>
                   <p className="mt-1.5 text-sm font-semibold text-slate-200">{room.path}</p>
                   <p className="mt-0.5 text-xs text-slate-500">{room.module}</p>
                 </div>
-                <span className={`grid size-11 place-items-center rounded-xl border ${isGreen ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-300" : "border-sky-300/20 bg-sky-300/10 text-sky-300"}`}>
+                <span className={`grid size-11 place-items-center rounded-xl border ${isGreen ? "border-emerald-300/20 bg-emerald-300/10 text-emerald-300" : "border-red-300/20 bg-red-300/10 text-red-300"}`}>
                   <Shield className="size-5" aria-hidden="true" />
                 </span>
               </div>
@@ -99,7 +99,7 @@ export default async function RoomPage({ params }: RoomPageProps) {
               <ul className="mt-3 space-y-2.5">
                 {room.objectives.map((objective) => (
                   <li key={objective} className="flex gap-2.5 text-xs leading-5 text-slate-500">
-                    <CheckCircle2 className={`mt-0.5 size-3.5 shrink-0 ${isGreen ? "text-emerald-400" : "text-sky-400"}`} aria-hidden="true" />
+                    <CheckCircle2 className={`mt-0.5 size-3.5 shrink-0 ${isGreen ? "text-emerald-400" : "text-red-400"}`} aria-hidden="true" />
                     {objective}
                   </li>
                 ))}
