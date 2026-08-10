@@ -13,6 +13,7 @@ Platforma **“oxu → analiz et → cavablandır → yoxla → xal qazan”** m
 - Room axtarışı və kateqoriya filtrləri
 - Şəxsi kiber roadmap səhifəsi
 - Statik profil redaktəsi və bildiriş mərkəzi
+- Statik əlaqə formu və əməkdaşlıq səhifəsi
 - Xal, rütbə, seriya və sinif reytinqi interfeysləri
 - Mobil, planşet və masaüstü üçün responsive dizayn
 
@@ -25,6 +26,7 @@ Platforma **“oxu → analiz et → cavablandır → yoxla → xal qazan”** m
 - TypeScript
 - Tailwind CSS 4
 - Lucide React
+- OGL / WebGL AcidSquares global arxa fonu
 - React Markdown və digər gələcək məzmun inteqrasiyaları üçün hazır frontend strukturu
 
 ## Səhifələr
@@ -37,6 +39,7 @@ Platforma **“oxu → analiz et → cavablandır → yoxla → xal qazan”** m
 | `/roadmap` | Bacarıq və ixtisaslaşma yol xəritəsi |
 | `/notifications` | Statik təlim və nailiyyət bildirişləri |
 | `/profile` | Statik profil və təlim seçimləri redaktəsi |
+| `/contact` | Statik əlaqə formu, əlaqə kanalları və FAQ |
 
 ## Lokal işə salma
 

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, LayoutDashboard, Map, Menu, UserRound, X } from "lucide-react";
+import { Bell, BookOpen, LayoutDashboard, Map, Menu, MessageCircle, UserRound, X } from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
@@ -11,6 +11,7 @@ const navigation = [
   { label: "İdarə paneli", href: "/", icon: LayoutDashboard },
   { label: "Room-lar", href: "/rooms", icon: BookOpen },
   { label: "Roadmap", href: "/roadmap", icon: Map },
+  { label: "Əlaqə", href: "/contact", icon: MessageCircle },
 ];
 
 function isActive(pathname: string, href: string) {
