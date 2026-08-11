@@ -1,0 +1,401 @@
+// Mirrors prisma/migrations/20260811000000_init/migration.sql.
+// Tables and enums use snake_case in Postgres and are mapped here.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum UserRole {
+  STUDENT
+  TEACHER
+  ADMIN
+
+  @@map("user_role")
+}
+
+enum RoomType {
+  WALKTHROUGH
+  CHALLENGE
+  ANALYSIS
+
+  @@map("room_type")
+}
+
+enum Difficulty {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+
+  @@map("difficulty")
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+
+  @@map("content_status")
+}
+
+enum ContentAccent {
+  GREEN
+  RED
+
+  @@map("content_accent")
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  TRUE_FALSE
+  SHORT_ANSWER
+
+  @@map("question_type")
+}
+
+enum ProgressStatus {
+  IN_PROGRESS
+  COMPLETED
+
+  @@map("progress_status")
+}
+
+enum PointsReason {
+  QUESTION_CORRECT
+  ROOM_COMPLETED
+  MANUAL_ADJUSTMENT
+
+  @@map("points_reason")
+}
+
+enum NotificationType {
+  TRAINING
+  ACHIEVEMENT
+  SYSTEM
+
+  @@map("notification_type")
+}
+
+model Organization {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug      String   @unique
+  name      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  classGroups ClassGroup[]
+  profiles    Profile[]
+
+  @@map("organizations")
+}
+
+model ClassGroup {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  organizationId String   @map("organization_id") @db.Uuid
+  name           String
+  academicYear   String?  @map("academic_year")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  memberships  ClassMembership[]
+
+  @@unique([organizationId, name])
+  @@map("class_groups")
+}
+
+/// One row per Supabase auth user. `id` is the auth.users id.
+model Profile {
+  id                 String   @id @db.Uuid
+  email              String
+  fullName           String?  @map("full_name")
+  username           String?  @unique
+  role               UserRole @default(STUDENT)
+  organizationId     String?  @map("organization_id") @db.Uuid
+  avatarKey          String?  @map("avatar_key")
+  bio                String?
+  institutionName    String?  @map("institution_name")
+  classLabel         String?  @map("class_label")
+  focusTrack         String?  @map("focus_track")
+  weeklyGoal         Int      @default(5) @map("weekly_goal")
+  notifyNewRooms     Boolean  @default(true) @map("notify_new_rooms")
+  notifyStreak       Boolean  @default(true) @map("notify_streak")
+  notifyLeaderboard  Boolean  @default(false) @map("notify_leaderboard")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  organization   Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  memberships    ClassMembership[]
+  createdPaths   Path[]
+  createdRooms   Room[]
+  roomProgress   RoomProgress[]
+  taskProgress   TaskProgress[]
+  answerAttempts AnswerAttempt[]
+  stats          UserStats?
+  pointsLedger   PointsLedger[]
+  notifications  Notification[]
+
+  @@index([organizationId])
+  @@index([role])
+  @@map("profiles")
+}
+
+model ClassMembership {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId    String   @map("profile_id") @db.Uuid
+  classGroupId String   @map("class_group_id") @db.Uuid
+  joinedAt     DateTime @default(now()) @map("joined_at") @db.Timestamptz(6)
+
+  profile    Profile    @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  classGroup ClassGroup @relation(fields: [classGroupId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, classGroupId])
+  @@index([classGroupId])
+  @@map("class_memberships")
+}
+
+model Path {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  slug        String        @unique
+  title       String
+  description String        @default("")
+  intro       String?
+  imageUrl    String?       @map("image_url")
+  category    String        @default("")
+  status      ContentStatus @default(DRAFT)
+  orderIndex  Int           @default(0) @map("order_index")
+  createdById String?       @map("created_by_id") @db.Uuid
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  createdBy Profile?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  modules   LearningModule[]
+
+  @@index([status, orderIndex])
+  @@map("paths")
+}
+
+model LearningModule {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  pathId      String        @map("path_id") @db.Uuid
+  slug        String
+  title       String
+  description String        @default("")
+  status      ContentStatus @default(DRAFT)
+  orderIndex  Int           @default(0) @map("order_index")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  path  Path   @relation(fields: [pathId], references: [id], onDelete: Cascade)
+  rooms Room[]
+
+  @@unique([pathId, slug])
+  @@index([pathId, orderIndex])
+  @@map("learning_modules")
+}
+
+model Room {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  moduleId      String        @map("module_id") @db.Uuid
+  slug          String        @unique
+  title         String
+  shortTitle    String        @default("") @map("short_title")
+  eyebrow       String        @default("")
+  description   String        @default("")
+  category      String        @default("")
+  type          RoomType      @default(WALKTHROUGH)
+  difficulty    Difficulty    @default(BEGINNER)
+  durationLabel String        @default("") @map("duration_label")
+  points        Int           @default(0)
+  accent        ContentAccent @default(GREEN)
+  objectives    String[]      @default([])
+  sourceFile    String?       @map("source_file")
+  status        ContentStatus @default(DRAFT)
+  orderIndex    Int           @default(0) @map("order_index")
+  publishedAt   DateTime?     @map("published_at") @db.Timestamptz(6)
+  createdById   String?       @map("created_by_id") @db.Uuid
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  module    LearningModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  createdBy Profile?       @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  tasks     Task[]
+  progress  RoomProgress[]
+
+  taskProgress TaskProgress[]
+  pointsLedger PointsLedger[]
+
+  @@index([moduleId, orderIndex])
+  @@index([status])
+  @@index([category])
+  @@map("rooms")
+}
+
+/// `sections` is an ordered array of { heading?, body, bullets? } objects.
+model Task {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  roomId        String   @map("room_id") @db.Uuid
+  orderIndex    Int      @map("order_index")
+  title         String
+  durationLabel String   @default("") @map("duration_label")
+  points        Int      @default(0)
+  sections      Json     @default("[]")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  room           Room            @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  questions      Question[]
+  progress       TaskProgress[]
+  answerAttempts AnswerAttempt[]
+  pointsLedger   PointsLedger[]
+
+  @@unique([roomId, orderIndex])
+  @@map("tasks")
+}
+
+model Question {
+  id              String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  taskId          String       @map("task_id") @db.Uuid
+  orderIndex      Int          @default(0) @map("order_index")
+  type            QuestionType @default(SINGLE_CHOICE)
+  prompt          String
+  explanation     String       @default("")
+  points          Int          @default(0)
+  acceptedAnswers String[]     @default([]) @map("accepted_answers")
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime     @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  task     Task             @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  options  QuestionOption[]
+  attempts AnswerAttempt[]
+
+  @@unique([taskId, orderIndex])
+  @@map("questions")
+}
+
+model QuestionOption {
+  id         String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  questionId String  @map("question_id") @db.Uuid
+  orderIndex Int     @map("order_index")
+  label      String
+  isCorrect  Boolean @default(false) @map("is_correct")
+
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([questionId, orderIndex])
+  @@map("question_options")
+}
+
+model RoomProgress {
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId          String         @map("profile_id") @db.Uuid
+  roomId             String         @map("room_id") @db.Uuid
+  status             ProgressStatus @default(IN_PROGRESS)
+  completedTaskCount Int            @default(0) @map("completed_task_count")
+  pointsEarned       Int            @default(0) @map("points_earned")
+  startedAt          DateTime       @default(now()) @map("started_at") @db.Timestamptz(6)
+  completedAt        DateTime?      @map("completed_at") @db.Timestamptz(6)
+  lastActivityAt     DateTime       @default(now()) @map("last_activity_at") @db.Timestamptz(6)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, roomId])
+  @@index([roomId])
+  @@map("room_progress")
+}
+
+model TaskProgress {
+  id           String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId    String         @map("profile_id") @db.Uuid
+  taskId       String         @map("task_id") @db.Uuid
+  roomId       String         @map("room_id") @db.Uuid
+  status       ProgressStatus @default(IN_PROGRESS)
+  pointsEarned Int            @default(0) @map("points_earned")
+  attempts     Int            @default(0)
+  completedAt  DateTime?      @map("completed_at") @db.Timestamptz(6)
+  updatedAt    DateTime       @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  room    Room    @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, taskId])
+  @@index([profileId, roomId])
+  @@map("task_progress")
+}
+
+model AnswerAttempt {
+  id              String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId       String   @map("profile_id") @db.Uuid
+  questionId      String   @map("question_id") @db.Uuid
+  taskId          String   @map("task_id") @db.Uuid
+  submittedAnswer Json     @map("submitted_answer")
+  isCorrect       Boolean  @map("is_correct")
+  pointsAwarded   Int      @default(0) @map("points_awarded")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  profile  Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  task     Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, questionId])
+  @@index([questionId])
+  @@map("answer_attempts")
+}
+
+model UserStats {
+  profileId      String    @id @map("profile_id") @db.Uuid
+  totalPoints    Int       @default(0) @map("total_points")
+  roomsCompleted Int       @default(0) @map("rooms_completed")
+  tasksCompleted Int       @default(0) @map("tasks_completed")
+  correctAnswers Int       @default(0) @map("correct_answers")
+  totalAnswers   Int       @default(0) @map("total_answers")
+  currentStreak  Int       @default(0) @map("current_streak")
+  longestStreak  Int       @default(0) @map("longest_streak")
+  lastActiveDate DateTime? @map("last_active_date") @db.Date
+  updatedAt      DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([totalPoints(sort: Desc)])
+  @@map("user_stats")
+}
+
+model PointsLedger {
+  id        String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String       @map("profile_id") @db.Uuid
+  amount    Int
+  reason    PointsReason
+  roomId    String?      @map("room_id") @db.Uuid
+  taskId    String?      @map("task_id") @db.Uuid
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  room    Room?   @relation(fields: [roomId], references: [id], onDelete: SetNull)
+  task    Task?   @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([profileId, createdAt(sort: Desc)])
+  @@map("points_ledger")
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  profileId String           @map("profile_id") @db.Uuid
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String           @default("")
+  href      String?
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  profile Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId, createdAt(sort: Desc)])
+  @@map("notifications")
+}

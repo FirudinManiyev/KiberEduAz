@@ -1,0 +1,82 @@
+# yaml-language-server: $schema=https://render.com/schema/render.yaml.json
+#
+# KiberEduAz backend (NestJS + Prisma) on Render.
+# The database is not declared here: Postgres lives in Supabase
+# (project okyhjpywngmportlzmxo, region ap-southeast-2 / Sydney).
+#
+# Region note: singapore is the closest Render region to ap-southeast-2
+# (~90-100 ms round trip) versus ~160 ms from oregon. Every Prisma query pays
+# that latency, so singapore roughly halves per-request database time.
+
+services:
+  - type: web
+    name: kiberedu-api
+    runtime: node
+    plan: free
+    region: singapore
+    rootDir: backend
+    # Prisma migrations are intentionally NOT run here - see README "Deploy".
+    # The schema was applied to Supabase out of band, so `migrate deploy` must
+    # be baselined once from a workstation before it can run unattended.
+    # --include=dev is required: NODE_ENV=production below makes npm omit
+    # devDependencies by default, and the build needs @nestjs/cli, prisma and
+    # typescript from there.
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
+    startCommand: npm run start:prod
+    healthCheckPath: /api/v1/health
+    autoDeployTrigger: commit
+    # Frontend-only commits should not rebuild the API.
+    buildFilter:
+      paths:
+        - backend/**
+        - render.yaml
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Matches the local toolchain (Node 24 LTS).
+      - key: NODE_VERSION
+        value: "24"
+
+      # PORT is injected by Render; the app binds 0.0.0.0:$PORT. Do not set it.
+
+      # Comma-separated allow list. Put the Vercel production domain here, e.g.
+      # https://kiberedu.vercel.app
+      # A leading * matches by hostname suffix. Vercel preview domains end with
+      # the team slug, so *-<team-slug>.vercel.app lets previews through
+      # without allowing every project hosted on vercel.app.
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Public Supabase identifiers - safe to keep in the repository.
+      - key: SUPABASE_URL
+        value: https://okyhjpywngmportlzmxo.supabase.co
+      - key: SUPABASE_PROJECT_REF
+        value: okyhjpywngmportlzmxo
+
+      # Secrets: set these in the Render Dashboard, never in this file.
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      # Only needed while the project still issues legacy HS256 tokens.
+      # Leave it out entirely when Supabase uses asymmetric signing keys.
+      - key: SUPABASE_JWT_SECRET
+        sync: false
+      # Both strings come from Supabase -> Connect. Copy them instead of typing
+      # the host by hand: the pooler hostname is per-tenant (this project is on
+      # aws-1, not aws-0) and a wrong host resolves and accepts TCP, so Prisma
+      # only reports "Can't reach database server" while Supavisor is really
+      # answering "tenant/user not found".
+      # Percent-encode the password (@ -> %40, # -> %23, / -> %2F, : -> %3A,
+      # ? -> %3F, & -> %26), otherwise the URL splits at the wrong character.
+      #
+      # Pooler connection (port 6543) used at runtime. Append
+      # ?pgbouncer=true&connection_limit=10&pool_timeout=20
+      # connection_limit=1 is a serverless setting: this API is a long-lived
+      # process serving several queries per page, so a limit of 1 fails
+      # concurrent requests with Prisma P2024 (pool timeout).
+      - key: DATABASE_URL
+        sync: false
+      # Direct connection (port 5432) used by Prisma migrations.
+      - key: DIRECT_URL
+        sync: false
