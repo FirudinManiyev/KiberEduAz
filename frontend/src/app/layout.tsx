@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteHeader } from "@/components/layout/site-header";
+import { ChromeGate } from "@/components/layout/chrome-gate";
+import { SiteFooterContainer } from "@/components/layout/site-footer-container";
+import { SiteHeaderContainer } from "@/components/layout/site-header-container";
 import { SiteLoader } from "@/components/feedback/site-loader";
 import { GlobalAcidBackground } from "@/components/effects/global-acid-background";
 import "./globals.css";
@@ -44,9 +45,13 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="flex min-h-full flex-col">
         <SiteLoader />
         <GlobalAcidBackground />
-        <SiteHeader />
+        <ChromeGate>
+          <SiteHeaderContainer />
+        </ChromeGate>
         {children}
-        <SiteFooter />
+        <ChromeGate>
+          <SiteFooterContainer />
+        </ChromeGate>
       </body>
     </html>
   );

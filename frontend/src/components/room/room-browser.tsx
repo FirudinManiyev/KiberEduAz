@@ -3,23 +3,30 @@
 import { Search, ShieldX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { RoomCard } from "@/components/room/room-card";
-import type { Room } from "@/types/room";
+import type { RoomSummary } from "@/lib/api/types";
 
 type RoomBrowserProps = {
-  rooms: Room[];
+  rooms: RoomSummary[];
 };
 
-const filters = ["Hamısı", "Hücum təhlükəsizliyi", "GRC"] as const;
+const ALL = "Hamısı";
 
 export function RoomBrowser({ rooms }: RoomBrowserProps) {
   const [query, setQuery] = useState("");
-  const [filter, setFilter] = useState<(typeof filters)[number]>("Hamısı");
+  const [filter, setFilter] = useState<string>(ALL);
+
+  // Categories come from the content itself, so a new Path added by a teacher
+  // shows up here without a code change.
+  const filters = useMemo(
+    () => [ALL, ...Array.from(new Set(rooms.map((room) => room.category))).filter(Boolean).sort()],
+    [rooms],
+  );
 
   const visibleRooms = useMemo(() => {
     const normalizedQuery = query.trim().toLocaleLowerCase("az");
 
     return rooms.filter((room) => {
-      const matchesFilter = filter === "Hamısı" || room.category === filter;
+      const matchesFilter = filter === ALL || room.category === filter;
       const matchesQuery =
         normalizedQuery.length === 0 ||
         [room.title, room.shortTitle, room.description, room.path, room.module]

@@ -2,26 +2,55 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, BookOpen, LayoutDashboard, Map, Menu, MessageCircle, UserRound, X } from "lucide-react";
+import {
+  Bell,
+  BookOpen,
+  LayoutDashboard,
+  LogIn,
+  Map,
+  Menu,
+  MessageCircle,
+  UserPlus,
+  UserRound,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 
-const navigation = [
-  { label: "İdarə paneli", href: "/", icon: LayoutDashboard },
+const memberNavigation = [
+  { label: "İdarə paneli", href: "/dashboard", icon: LayoutDashboard },
   { label: "Room-lar", href: "/rooms", icon: BookOpen },
   { label: "Roadmap", href: "/roadmap", icon: Map },
   { label: "Əlaqə", href: "/contact", icon: MessageCircle },
 ];
 
+const guestNavigation = [
+  { label: "Ana səhifə", href: "/", icon: LayoutDashboard },
+  { label: "Əlaqə", href: "/contact", icon: MessageCircle },
+];
+
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
-  return pathname.startsWith(href);
+  return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function SiteHeader() {
+export type SiteHeaderUser = {
+  name: string;
+  initials: string;
+  points: number;
+};
+
+type SiteHeaderProps = {
+  user: SiteHeaderUser | null;
+  unreadCount: number;
+};
+
+export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const signedIn = Boolean(user);
+  const navigation = signedIn ? memberNavigation : guestNavigation;
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#151719]/90 backdrop-blur-2xl">
@@ -58,39 +87,73 @@ export function SiteHeader() {
             Sistem aktivdir
           </div>
 
-          <Link
-            href="/notifications"
-            prefetch
-            className={`relative inline-flex size-10 items-center justify-center rounded-xl border transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
-              pathname === "/notifications"
-                ? "border-red-300/25 bg-red-400/10 text-red-300"
-                : "border-transparent text-slate-400 hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-white"
-            }`}
-            aria-label="Bildirişlər"
-          >
-            <Bell className="block size-[19px] shrink-0" aria-hidden="true" />
-            <span className="absolute right-1.5 top-1.5 grid size-3.5 place-items-center rounded-full bg-red-500 text-[8px] font-black leading-none text-white ring-2 ring-[#151719]">3</span>
-            <span className="absolute bottom-1 left-1/2 flex -translate-x-1/2 leading-none"><LinkLoadingIndicator /></span>
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/notifications"
+                prefetch
+                className={`relative inline-flex size-10 items-center justify-center rounded-xl border transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
+                  pathname === "/notifications"
+                    ? "border-red-300/25 bg-red-400/10 text-red-300"
+                    : "border-transparent text-slate-400 hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-white"
+                }`}
+                aria-label="Bildirişlər"
+              >
+                <Bell className="block size-[19px] shrink-0" aria-hidden="true" />
+                {unreadCount > 0 && (
+                  <span className="absolute right-1.5 top-1.5 grid size-3.5 place-items-center rounded-full bg-red-500 text-[8px] font-black leading-none text-white ring-2 ring-[#151719]">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+                <span className="absolute bottom-1 left-1/2 flex -translate-x-1/2 leading-none">
+                  <LinkLoadingIndicator />
+                </span>
+              </Link>
 
-          <Link
-            href="/profile"
-            prefetch
-            className={`hidden items-center gap-2.5 rounded-xl border p-1.5 pr-3 transition-all hover:-translate-y-0.5 sm:flex ${
-              pathname === "/profile"
-                ? "border-emerald-300/20 bg-emerald-300/[0.07]"
-                : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.15] hover:bg-white/[0.05]"
-            }`}
-          >
-            <span className="avatar-pulse relative grid size-8 place-items-center rounded-lg bg-gradient-to-br from-red-500 to-red-900 text-xs font-bold text-white">
-              AN
-            </span>
-            <span className="text-left leading-tight">
-              <span className="block text-xs font-semibold text-slate-100">Aylin N.</span>
-              <span className="block text-[10px] text-slate-500">1,240 XP</span>
-            </span>
-            <LinkLoadingIndicator />
-          </Link>
+              <Link
+                href="/profile"
+                prefetch
+                className={`hidden items-center gap-2.5 rounded-xl border p-1.5 pr-3 transition-all hover:-translate-y-0.5 sm:flex ${
+                  pathname === "/profile"
+                    ? "border-emerald-300/20 bg-emerald-300/[0.07]"
+                    : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.15] hover:bg-white/[0.05]"
+                }`}
+              >
+                <span className="avatar-pulse relative grid size-8 place-items-center rounded-lg bg-gradient-to-br from-red-500 to-red-900 text-xs font-bold text-white">
+                  {user.initials}
+                </span>
+                <span className="text-left leading-tight">
+                  <span className="block text-xs font-semibold text-slate-100">{user.name}</span>
+                  <span className="block text-[10px] text-slate-500">
+                    {user.points.toLocaleString("az-AZ")} XP
+                  </span>
+                </span>
+                <LinkLoadingIndicator />
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                prefetch
+                className="hidden items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3.5 py-2 text-xs font-semibold text-slate-200 transition-all hover:-translate-y-0.5 hover:border-white/[0.15] hover:bg-white/[0.05] sm:inline-flex"
+              >
+                <LogIn className="size-3.5" aria-hidden="true" />
+                Daxil ol
+                <LinkLoadingIndicator />
+              </Link>
+              <Link href="/register" prefetch className="primary-action !h-10 !px-4 !text-xs sm:!text-sm">
+                <span className="relative z-10 inline-flex items-center gap-2">
+                  <UserPlus className="size-3.5" aria-hidden="true" />
+                  Qeydiyyat
+                </span>
+                <span className="relative z-10">
+                  <LinkLoadingIndicator />
+                </span>
+                <span className="button-sheen" />
+              </Link>
+            </>
+          )}
 
           <button
             type="button"
@@ -105,9 +168,23 @@ export function SiteHeader() {
       </div>
 
       {menuOpen && (
-        <nav className="mobile-nav-enter border-t border-white/[0.07] bg-[#17191b] px-4 py-3 lg:hidden" aria-label="Mobil naviqasiya">
+        <nav
+          className="mobile-nav-enter border-t border-white/[0.07] bg-[#17191b] px-4 py-3 lg:hidden"
+          aria-label="Mobil naviqasiya"
+        >
           <div className="mx-auto grid max-w-[1440px] gap-1">
-            {[...navigation, { label: "Bildirişlər", href: "/notifications", icon: Bell }, { label: "Profil", href: "/profile", icon: UserRound }].map((item) => {
+            {(signedIn
+              ? [
+                  ...memberNavigation,
+                  { label: "Bildirişlər", href: "/notifications", icon: Bell },
+                  { label: "Profil", href: "/profile", icon: UserRound },
+                ]
+              : [
+                  ...guestNavigation,
+                  { label: "Daxil ol", href: "/login", icon: LogIn },
+                  { label: "Qeydiyyat", href: "/register", icon: UserPlus },
+                ]
+            ).map((item) => {
               const Icon = item.icon;
               const active = isActive(pathname, item.href);
 

@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# KiberEduAz Frontend
 
-## Getting Started
+Next.js 16 (App Router) tətbiqi. Bütün məzmun və progress məlumatı KiberEduAz API-dan gəlir; statik mock data artıq yoxdur.
 
-First, run the development server:
+Quraşdırma addımları üçün repozitoriyanın kök [README](../README.md) faylına bax.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Data axını
+
+```text
+Server Component  ──> lib/api/server.ts  (apiFetch)   ──> NestJS API
+Client Component  ──> lib/api/client.ts  (apiRequest) ──> NestJS API
+proxy.ts          ──> Supabase sessiyasını yeniləyir və qorunan route-ları yoxlayır
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- `lib/supabase/server.ts` və `lib/supabase/client.ts` — `@supabase/ssr` klientləri.
+- `apiFetch` cookie-dəki Supabase access token-i `Authorization` başlığına əlavə edir. Sessiya yoxdursa `apiFetchOrNull` `null` qaytarır ki, layout qonaq rejimində render oluna bilsin.
+- `lib/api/types.ts` backend cavablarının tiplərini saxlayır; backend DTO-ları dəyişəndə bu fayl da yenilənməlidir.
+- `lib/api/labels.ts` enum dəyərlərini (`WALKTHROUGH`, `BEGINNER` və s.) Azərbaycan dilindəki etiketlərə çevirir.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Route-lar
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Marşrut | Təyinat | Giriş |
+|---|---|---|
+| `/` | İdarə paneli: room-lar, progress, reytinq, bildirişlər | Tələb olunur |
+| `/rooms` | Room kataloqu, axtarış və filtrləmə | Tələb olunur |
+| `/rooms/[slug]` | Dərs və quiz axını | Tələb olunur |
+| `/roadmap` | Bacarıq yol xəritəsi | Açıq |
+| `/notifications` | Bildiriş mərkəzi | Tələb olunur |
+| `/profile` | Profil redaktəsi | Tələb olunur |
+| `/contact` | Əlaqə formu və FAQ | Açıq |
+| `/login`, `/register` | Supabase Auth | Yalnız qonaq |
 
-## Learn More
+Qorunma `src/proxy.ts` faylında həyata keçirilir (Next.js 16-da `middleware.ts` bu adla əvəz olunub).
 
-To learn more about Next.js, take a look at the following resources:
+## Struktur
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```text
+src/
+├── app/          # Route-lar və server component-lər
+├── components/   # UI və funksional komponentlər
+└── lib/
+    ├── api/      # Backend klienti və tiplər
+    └── supabase/ # Supabase browser/server klientləri
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Əmrlər
 
-## Deploy on Vercel
+```bash
+npm run dev     # inkişaf serveri
+npm run build   # production build
+npm run lint    # ESLint
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Dizayn istiqaməti
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Vizual sistem qara fon, qırmızı risk siqnalları və yaşıl sistem/progress vəziyyətləri üzərində qurulub. UI daxilində əməliyyat mərkəzi, radar, terminal və təhlükəsizlik siqnalı motivlərindən istifadə edilir. Animasiyalar əsasən CSS üzərindən işləyir və `prefers-reduced-motion` seçiminə hörmət edir.

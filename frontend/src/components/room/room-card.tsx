@@ -1,17 +1,19 @@
 import Link from "next/link";
-import { ArrowUpRight, Clock3, Crosshair, FileCheck2, Shield, Users, Zap } from "lucide-react";
+import { ArrowUpRight, Clock3, Crosshair, FileCheck2, ListChecks, Shield, Zap } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 import { ProgressRing } from "@/components/ui/progress-ring";
-import type { Room } from "@/types/room";
+import { DIFFICULTY_LABELS, ROOM_TYPE_LABELS } from "@/lib/api/labels";
+import type { RoomSummary } from "@/lib/api/types";
 
 type RoomCardProps = {
-  room: Room;
+  room: RoomSummary;
   featured?: boolean;
 };
 
 export function RoomCard({ room, featured = false }: RoomCardProps) {
-  const isGreen = room.accent === "green";
+  const isGreen = room.accent === "GREEN";
   const CategoryIcon = room.category === "GRC" ? FileCheck2 : Crosshair;
+  const percent = room.progress.percent;
 
   return (
     <article
@@ -32,9 +34,9 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
         </div>
         <div className="flex items-center gap-2">
           <span className="rounded-full border border-white/[0.08] bg-black/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-400 transition-colors group-hover:border-white/[0.14] group-hover:text-slate-200">
-            {room.type}
+            {ROOM_TYPE_LABELS[room.type]}
           </span>
-          {room.progress > 0 && <ProgressRing value={room.progress} size={42} accent={room.accent} />}
+          {percent > 0 && <ProgressRing value={percent} size={42} accent={isGreen ? "green" : "red"} />}
         </div>
       </div>
 
@@ -46,9 +48,9 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
         <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400 transition-colors group-hover:text-slate-300">{room.description}</p>
 
         <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-white/[0.06] pt-4 text-xs text-slate-500">
-          <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Shield className="size-3.5" aria-hidden="true" />{room.difficulty}</span>
-          <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Clock3 className="size-3.5" aria-hidden="true" />{room.duration}</span>
-          <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Users className="size-3.5" aria-hidden="true" />{room.learners}</span>
+          <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Shield className="size-3.5" aria-hidden="true" />{DIFFICULTY_LABELS[room.difficulty]}</span>
+          <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Clock3 className="size-3.5" aria-hidden="true" />{room.durationLabel}</span>
+          <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><ListChecks className="size-3.5" aria-hidden="true" />{room.taskCount} task</span>
           <span className={`ml-auto inline-flex items-center gap-1 font-semibold ${isGreen ? "text-emerald-300" : "text-red-300"}`}><Zap className="size-3.5" />{room.points} XP</span>
         </div>
 
@@ -61,7 +63,7 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
               : "border-red-300/15 bg-red-300/[0.07] text-red-200 hover:border-red-300/40 hover:bg-red-300/[0.13] focus-visible:ring-red-400"
           }`}
         >
-          <span className="relative z-10">{room.progress > 0 ? "Davam et" : "Room-a başla"}</span>
+          <span className="relative z-10">{percent > 0 ? "Davam et" : "Room-a başla"}</span>
           <span className="relative z-10 flex items-center gap-2">
             <LinkLoadingIndicator />
             <ArrowUpRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" aria-hidden="true" />
