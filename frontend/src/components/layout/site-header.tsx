@@ -10,6 +10,7 @@ import {
   Map,
   Menu,
   MessageCircle,
+  Shield,
   UserPlus,
   UserRound,
   X,
@@ -17,18 +18,37 @@ import {
 import { useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
-
-const memberNavigation = [
-  { label: "İdarə paneli", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Room-lar", href: "/rooms", icon: BookOpen },
-  { label: "Roadmap", href: "/roadmap", icon: Map },
-  { label: "Əlaqə", href: "/contact", icon: MessageCircle },
-];
+import type { UserRole } from "@/lib/api/types";
 
 const guestNavigation = [
   { label: "Ana səhifə", href: "/", icon: LayoutDashboard },
   { label: "Əlaqə", href: "/contact", icon: MessageCircle },
 ];
+
+function navigationFor(role: UserRole | undefined, pending: boolean) {
+  if (!role) return guestNavigation;
+  if (pending) return [{ label: "Gözləmə", href: "/pending", icon: Shield }];
+  if (role === "ADMIN") {
+    return [
+      { label: "Admin", href: "/admin", icon: Shield },
+      { label: "Room-lar", href: "/rooms", icon: BookOpen },
+      { label: "Əlaqə", href: "/contact", icon: MessageCircle },
+    ];
+  }
+  if (role === "TEACHER") {
+    return [
+      { label: "Müəllim", href: "/teacher", icon: LayoutDashboard },
+      { label: "Room-lar", href: "/rooms", icon: BookOpen },
+      { label: "Əlaqə", href: "/contact", icon: MessageCircle },
+    ];
+  }
+  return [
+    { label: "İdarə paneli", href: "/dashboard", icon: LayoutDashboard },
+    { label: "Room-lar", href: "/rooms", icon: BookOpen },
+    { label: "Roadmap", href: "/roadmap", icon: Map },
+    { label: "Əlaqə", href: "/contact", icon: MessageCircle },
+  ];
+}
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -39,6 +59,9 @@ export type SiteHeaderUser = {
   name: string;
   initials: string;
   points: number;
+  role: UserRole;
+  pending: boolean;
+  homeHref: string;
 };
 
 type SiteHeaderProps = {
@@ -50,7 +73,7 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const signedIn = Boolean(user);
-  const navigation = signedIn ? memberNavigation : guestNavigation;
+  const navigation = navigationFor(user?.role, Boolean(user?.pending));
 
   return (
     <header className="sticky top-0 z-50 border-b border-white/[0.07] bg-[#151719]/90 backdrop-blur-2xl">
@@ -89,32 +112,34 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
 
           {user ? (
             <>
-              <Link
-                href="/notifications"
-                prefetch
-                className={`relative inline-flex size-10 items-center justify-center rounded-xl border transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
-                  pathname === "/notifications"
-                    ? "border-red-300/25 bg-red-400/10 text-red-300"
-                    : "border-transparent text-slate-400 hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-white"
-                }`}
-                aria-label="Bildirişlər"
-              >
-                <Bell className="block size-[19px] shrink-0" aria-hidden="true" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-1.5 top-1.5 grid size-3.5 place-items-center rounded-full bg-red-500 text-[8px] font-black leading-none text-white ring-2 ring-[#151719]">
-                    {unreadCount > 9 ? "9+" : unreadCount}
+              {!user.pending && (
+                <Link
+                  href="/notifications"
+                  prefetch
+                  className={`relative inline-flex size-10 items-center justify-center rounded-xl border transition-all hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
+                    pathname === "/notifications"
+                      ? "border-red-300/25 bg-red-400/10 text-red-300"
+                      : "border-transparent text-slate-400 hover:border-white/[0.08] hover:bg-white/[0.055] hover:text-white"
+                  }`}
+                  aria-label="Bildirişlər"
+                >
+                  <Bell className="block size-[19px] shrink-0" aria-hidden="true" />
+                  {unreadCount > 0 && (
+                    <span className="absolute right-1.5 top-1.5 grid size-3.5 place-items-center rounded-full bg-red-500 text-[8px] font-black leading-none text-white ring-2 ring-[#151719]">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                  <span className="absolute bottom-1 left-1/2 flex -translate-x-1/2 leading-none">
+                    <LinkLoadingIndicator />
                   </span>
-                )}
-                <span className="absolute bottom-1 left-1/2 flex -translate-x-1/2 leading-none">
-                  <LinkLoadingIndicator />
-                </span>
-              </Link>
+                </Link>
+              )}
 
               <Link
-                href="/profile"
+                href={user.pending ? "/pending" : "/profile"}
                 prefetch
                 className={`hidden items-center gap-2.5 rounded-xl border p-1.5 pr-3 transition-all hover:-translate-y-0.5 sm:flex ${
-                  pathname === "/profile"
+                  pathname === "/profile" || pathname === "/pending"
                     ? "border-emerald-300/20 bg-emerald-300/[0.07]"
                     : "border-white/[0.08] bg-white/[0.025] hover:border-white/[0.15] hover:bg-white/[0.05]"
                 }`}
@@ -125,7 +150,13 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
                 <span className="text-left leading-tight">
                   <span className="block text-xs font-semibold text-slate-100">{user.name}</span>
                   <span className="block text-[10px] text-slate-500">
-                    {user.points.toLocaleString("az-AZ")} XP
+                    {user.pending
+                      ? "Gözləmədə"
+                      : user.role === "ADMIN"
+                        ? "Admin"
+                        : user.role === "TEACHER"
+                          ? "Müəllim"
+                          : `${user.points.toLocaleString("az-AZ")} XP`}
                   </span>
                 </span>
                 <LinkLoadingIndicator />
@@ -175,14 +206,19 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
           <div className="mx-auto grid max-w-[1440px] gap-1">
             {(signedIn
               ? [
-                  ...memberNavigation,
-                  { label: "Bildirişlər", href: "/notifications", icon: Bell },
-                  { label: "Profil", href: "/profile", icon: UserRound },
+                  ...navigation,
+                  ...(user?.pending
+                    ? []
+                    : [
+                        { label: "Bildirişlər", href: "/notifications", icon: Bell },
+                        { label: "Profil", href: "/profile", icon: UserRound },
+                      ]),
                 ]
               : [
                   ...guestNavigation,
                   { label: "Daxil ol", href: "/login", icon: LogIn },
                   { label: "Qeydiyyat", href: "/register", icon: UserPlus },
+                  { label: "Müəllim qeydiyyatı", href: "/register/teacher", icon: UserPlus },
                 ]
             ).map((item) => {
               const Icon = item.icon;

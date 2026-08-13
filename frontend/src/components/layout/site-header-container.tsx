@@ -1,10 +1,8 @@
 import { SiteHeader, type SiteHeaderUser } from "@/components/layout/site-header";
 import { apiFetchOrNull } from "@/lib/api/server";
 import type { MyProfile, NotificationFeed } from "@/lib/api/types";
+import { homePathFor } from "@/lib/auth/home-path";
 
-/// Fetches the identity strip and unread badge for the header. Both requests
-/// return null when the visitor is signed out, and the header is not rendered
-/// on the auth screens anyway.
 export async function SiteHeaderContainer() {
   const [profile, notifications] = await Promise.all([
     apiFetchOrNull<MyProfile>("/profiles/me"),
@@ -16,6 +14,9 @@ export async function SiteHeaderContainer() {
         name: shortName(profile.fullName ?? profile.username ?? profile.email),
         initials: initialsOf(profile.fullName ?? profile.username ?? profile.email),
         points: profile.stats.totalPoints,
+        role: profile.role,
+        pending: profile.role === "TEACHER" && profile.accountStatus !== "ACTIVE",
+        homeHref: homePathFor(profile),
       }
     : null;
 

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import {
   Activity,
   ArrowRight,
@@ -26,10 +27,12 @@ import { RoomCard } from "@/components/room/room-card";
 import { apiFetch, apiFetchOrNull } from "@/lib/api/server";
 import type {
   Leaderboard,
+  MyProfile,
   NotificationFeed,
   ProgressSummary,
   RoomSummary,
 } from "@/lib/api/types";
+import { homePathFor } from "@/lib/auth/home-path";
 
 const AVATAR_TONES = ["emerald", "red", "violet", "dark"] as const;
 
@@ -41,6 +44,14 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
+  const profile = await apiFetchOrNull<MyProfile>("/profiles/me");
+
+  if (!profile) redirect("/login?next=/dashboard");
+
+  const home = homePathFor(profile);
+
+  if (home !== "/dashboard") redirect(home);
+
   const [rooms, summary, leaderboard, notifications] = await Promise.all([
     apiFetch<RoomSummary[]>("/rooms"),
     apiFetch<ProgressSummary>("/progress/summary"),

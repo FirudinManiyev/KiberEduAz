@@ -46,18 +46,23 @@ export class RoomsController {
 
   @Patch(':id')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpsertRoomDto) {
-    return this.roomsService.update(id, dto);
+  update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpsertRoomDto,
+  ) {
+    return this.roomsService.update(user, id, dto);
   }
 
+  /// Only admins can grant public access to a room a teacher drafted.
   @Post(':id/publish')
-  @Roles(UserRole.TEACHER, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   publish(@Param('id', ParseUUIDPipe) id: string) {
     return this.roomsService.setStatus(id, ContentStatus.PUBLISHED);
   }
 
   @Post(':id/unpublish')
-  @Roles(UserRole.TEACHER, UserRole.ADMIN)
+  @Roles(UserRole.ADMIN)
   unpublish(@Param('id', ParseUUIDPipe) id: string) {
     return this.roomsService.setStatus(id, ContentStatus.DRAFT);
   }

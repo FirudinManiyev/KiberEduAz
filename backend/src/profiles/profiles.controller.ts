@@ -1,8 +1,12 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { UserRole } from '@prisma/client';
 import { CurrentUser, Roles } from '../auth/decorators';
 import type { AuthenticatedUser } from '../auth/auth.types';
-import { ChangeRoleDto, UpdateProfileDto } from './dto/update-profile.dto';
+import {
+  ChangeRoleDto,
+  RequestTeacherDto,
+  UpdateProfileDto,
+} from './dto/update-profile.dto';
 import { ProfilesService } from './profiles.service';
 
 @Controller('profiles')
@@ -17,6 +21,13 @@ export class ProfilesController {
   @Patch('me')
   update(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpdateProfileDto) {
     return this.profilesService.update(user, dto);
+  }
+
+  /// Any authenticated student can apply to become a teacher. Access stays
+  /// locked until an admin approves the account.
+  @Post('me/request-teacher')
+  requestTeacher(@CurrentUser() user: AuthenticatedUser, @Body() dto: RequestTeacherDto) {
+    return this.profilesService.requestTeacher(user, dto);
   }
 
   @Get()

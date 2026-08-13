@@ -162,9 +162,15 @@ export class RoomsService {
   async create(user: AuthenticatedUser, dto: UpsertRoomDto) {
     await this.assertModuleExists(dto.moduleId);
 
+    // Teachers always create drafts; only an admin can publish later.
+    const status =
+      user.profile.role === UserRole.ADMIN
+        ? (dto.status ?? ContentStatus.DRAFT)
+        : ContentStatus.DRAFT;
+
     const room = await this.prisma.room.create({
       data: {
-        ...this.roomData(dto),
+        ...this.roomData({ ...dto, status }),
         moduleId: dto.moduleId,
         slug: dto.slug,
         title: dto.title,
@@ -176,14 +182,17 @@ export class RoomsService {
     return toRoomDetailForAuthor(room as RoomWithContent);
   }
 
-  async update(id: string, dto: Partial<UpsertRoomDto>) {
+  async update(user: AuthenticatedUser, id: string, dto: Partial<UpsertRoomDto>) {
     if (dto.moduleId) {
       await this.assertModuleExists(dto.moduleId);
     }
 
+    const safeDto =
+      user.profile.role === UserRole.ADMIN ? dto : { ...dto, status: undefined };
+
     const room = await this.prisma.room.update({
       where: { id },
-      data: this.roomData(dto),
+      data: this.roomData(safeDto),
       include: CONTENT_INCLUDE,
     });
 

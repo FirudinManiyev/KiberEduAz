@@ -19,6 +19,15 @@ enum UserRole {
   @@map("user_role")
 }
 
+/// Teacher self-registration starts as PENDING until an admin approves.
+enum AccountStatus {
+  ACTIVE
+  PENDING
+  REJECTED
+
+  @@map("account_status")
+}
+
 enum RoomType {
   WALKTHROUGH
   CHALLENGE
@@ -97,40 +106,45 @@ model Organization {
 model ClassGroup {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   organizationId String   @map("organization_id") @db.Uuid
+  teacherId      String?  @map("teacher_id") @db.Uuid
   name           String
   academicYear   String?  @map("academic_year")
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt      DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   organization Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  teacher      Profile?         @relation("ClassTeacher", fields: [teacherId], references: [id], onDelete: SetNull)
   memberships  ClassMembership[]
 
   @@unique([organizationId, name])
+  @@index([teacherId])
   @@map("class_groups")
 }
 
 /// One row per Supabase auth user. `id` is the auth.users id.
 model Profile {
-  id                 String   @id @db.Uuid
+  id                 String        @id @db.Uuid
   email              String
-  fullName           String?  @map("full_name")
-  username           String?  @unique
-  role               UserRole @default(STUDENT)
-  organizationId     String?  @map("organization_id") @db.Uuid
-  avatarKey          String?  @map("avatar_key")
+  fullName           String?       @map("full_name")
+  username           String?       @unique
+  role               UserRole      @default(STUDENT)
+  accountStatus      AccountStatus @default(ACTIVE) @map("account_status")
+  organizationId     String?       @map("organization_id") @db.Uuid
+  avatarKey          String?       @map("avatar_key")
   bio                String?
-  institutionName    String?  @map("institution_name")
-  classLabel         String?  @map("class_label")
-  focusTrack         String?  @map("focus_track")
-  weeklyGoal         Int      @default(5) @map("weekly_goal")
-  notifyNewRooms     Boolean  @default(true) @map("notify_new_rooms")
-  notifyStreak       Boolean  @default(true) @map("notify_streak")
-  notifyLeaderboard  Boolean  @default(false) @map("notify_leaderboard")
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+  institutionName    String?       @map("institution_name")
+  classLabel         String?       @map("class_label")
+  focusTrack         String?       @map("focus_track")
+  weeklyGoal         Int           @default(5) @map("weekly_goal")
+  notifyNewRooms     Boolean       @default(true) @map("notify_new_rooms")
+  notifyStreak       Boolean       @default(true) @map("notify_streak")
+  notifyLeaderboard  Boolean       @default(false) @map("notify_leaderboard")
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
 
   organization   Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   memberships    ClassMembership[]
+  taughtClasses  ClassGroup[]      @relation("ClassTeacher")
   createdPaths   Path[]
   createdRooms   Room[]
   roomProgress   RoomProgress[]
@@ -142,6 +156,7 @@ model Profile {
 
   @@index([organizationId])
   @@index([role])
+  @@index([accountStatus])
   @@map("profiles")
 }
 

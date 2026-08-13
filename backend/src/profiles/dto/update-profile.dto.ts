@@ -9,8 +9,9 @@ import {
   Max,
   MaxLength,
   Min,
+  MinLength,
 } from 'class-validator';
-import { UserRole } from '@prisma/client';
+import { AccountStatus, UserRole } from '@prisma/client';
 
 export class UpdateProfileDto {
   @IsOptional() @IsString() @MaxLength(120) fullName?: string;
@@ -38,4 +39,15 @@ export class UpdateProfileDto {
 /// can never promote themselves by adding a field to the request body.
 export class ChangeRoleDto {
   @IsEnum(UserRole) role!: UserRole;
+}
+
+export class RequestTeacherDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(160)
+  institutionName!: string;
+}
+
+export class ChangeAccountStatusDto {
+  @IsEnum(AccountStatus) accountStatus!: AccountStatus;
 }

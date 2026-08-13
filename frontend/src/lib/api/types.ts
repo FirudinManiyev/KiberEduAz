@@ -5,6 +5,7 @@ export type ContentStatus = "DRAFT" | "PUBLISHED" | "ARCHIVED";
 export type ProgressStatus = "IN_PROGRESS" | "COMPLETED";
 export type QuestionType = "SINGLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER";
 export type UserRole = "STUDENT" | "TEACHER" | "ADMIN";
+export type AccountStatus = "ACTIVE" | "PENDING" | "REJECTED";
 
 export interface LessonSection {
   heading?: string;
@@ -170,12 +171,14 @@ export interface MyProfile {
   fullName: string | null;
   username: string | null;
   role: UserRole;
+  accountStatus: AccountStatus;
   avatarKey: string | null;
   bio: string | null;
   institutionName: string | null;
   classLabel: string | null;
   focusTrack: string | null;
   weeklyGoal: number;
+  organizationId: string | null;
   notifications: { newRooms: boolean; streak: boolean; leaderboard: boolean };
   stats: {
     totalPoints: number;
@@ -185,6 +188,78 @@ export interface MyProfile {
     tasksCompleted: number;
   };
   classes: { id: string; name: string; organization: string }[];
+  taughtClasses: { id: string; name: string; organization: string; studentCount: number }[];
+}
+
+export interface AdminStats {
+  users: number;
+  students: number;
+  teachersActive: number;
+  teachersPending: number;
+  classes: number;
+  roomsPublished: number;
+  roomsDraft: number;
+  paths: number;
+}
+
+export interface PendingTeacher {
+  id: string;
+  email: string;
+  fullName: string | null;
+  institutionName: string | null;
+  createdAt: string;
+  accountStatus: AccountStatus;
+  role: UserRole;
+}
+
+export interface PendingRoom {
+  id: string;
+  slug: string;
+  title: string;
+  status: ContentStatus;
+  createdAt: string;
+  createdBy: { id: string; fullName: string | null; email: string } | null;
+  module: { id: string; title: string; path: { id: string; title: string } };
+  _count: { tasks: number };
+}
+
+export interface ClassSummary {
+  id: string;
+  name: string;
+  academicYear: string | null;
+  organization: { id: string; name: string };
+  teacher: { id: string; fullName: string | null; email: string } | null;
+  _count: { memberships: number };
+}
+
+export interface ClassDetail {
+  id: string;
+  name: string;
+  academicYear: string | null;
+  organization: { id: string; name: string };
+  teacher: { id: string; fullName: string | null; email: string } | null;
+  students: {
+    membershipId: string;
+    joinedAt: string;
+    id: string;
+    email: string;
+    fullName: string | null;
+    role: UserRole;
+    stats: { totalPoints: number; roomsCompleted: number } | null;
+  }[];
+}
+
+export interface AdminUserRow {
+  id: string;
+  email: string;
+  fullName: string | null;
+  username: string | null;
+  role: UserRole;
+  accountStatus: AccountStatus;
+  institutionName: string | null;
+  classLabel: string | null;
+  createdAt: string;
+  stats: { totalPoints: number; roomsCompleted: number; currentStreak: number } | null;
 }
 
 export interface NotificationFeed {

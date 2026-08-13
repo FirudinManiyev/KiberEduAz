@@ -13,8 +13,6 @@ const PUBLIC_PREFIXES = [
   "/sitemap.xml",
 ];
 
-const HOME = "/dashboard";
-
 export async function proxy(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -58,10 +56,17 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(redirect);
   }
 
-  // A signed-in learner has no use for the marketing page or the auth screens.
-  if (user && (pathname === "/" || pathname === "/login" || pathname === "/register")) {
+  // Signed-in visitors leave marketing/auth screens; role-specific home is
+  // resolved after /profiles/me on the destination page.
+  if (
+    user &&
+    (pathname === "/" ||
+      pathname === "/login" ||
+      pathname === "/register" ||
+      pathname === "/register/teacher")
+  ) {
     const redirect = request.nextUrl.clone();
-    redirect.pathname = HOME;
+    redirect.pathname = "/dashboard";
     redirect.search = "";
 
     return NextResponse.redirect(redirect);

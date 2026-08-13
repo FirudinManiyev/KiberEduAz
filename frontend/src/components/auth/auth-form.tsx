@@ -2,12 +2,23 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { AlertTriangle, ArrowRight, Loader2, Lock, Mail, UserRound } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  Building2,
+  Loader2,
+  Lock,
+  Mail,
+  UserRound,
+} from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Logo } from "@/components/brand/logo";
+import { apiRequest } from "@/lib/api/client";
+import type { MyProfile } from "@/lib/api/types";
+import { homePathFor } from "@/lib/auth/home-path";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "register-teacher";
 
 const COPY = {
   login: {
@@ -24,6 +35,15 @@ const COPY = {
     title: "Kiber yoluna başla",
     lead: "Bir neçə saniyəyə hesab yarat və ilk Room-unu aç.",
     submit: "Hesab yarat",
+    switchText: "Artıq hesabın var?",
+    switchLabel: "Daxil ol",
+    switchHref: "/login",
+  },
+  "register-teacher": {
+    kicker: "Müəllim qeydiyyatı",
+    title: "Təlimçi hesabı yarat",
+    lead: "Qeydiyyatdan sonra admin təsdiqi gözləyəcəksən. Təsdiq olmadan panel açılmır.",
+    submit: "Müəllim kimi qeydiyyat",
     switchText: "Artıq hesabın var?",
     switchLabel: "Daxil ol",
     switchHref: "/login",
@@ -54,23 +74,33 @@ export function AuthForm({ mode }: { mode: Mode }) {
     const email = String(form.get("email") ?? "").trim();
     const password = String(form.get("password") ?? "");
     const fullName = String(form.get("fullName") ?? "").trim();
+    const institutionName = String(form.get("institutionName") ?? "").trim();
 
     const supabase = createSupabaseBrowserClient();
 
     try {
-      if (mode === "register") {
+      if (mode === "register" || mode === "register-teacher") {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
           password,
-          options: { data: { full_name: fullName } },
+          options: {
+            data: {
+              full_name: fullName,
+              ...(mode === "register-teacher"
+                ? { pending_teacher: true, institution_name: institutionName }
+                : {}),
+            },
+          },
         });
 
         if (signUpError) throw signUpError;
 
-        // With email confirmation enabled Supabase returns a user but no
-        // session, so there is nothing to redirect to yet.
         if (!data.session) {
-          setNotice("Təsdiq linki e-poçtuna göndərildi. Linki açdıqdan sonra daxil ola bilərsən.");
+          setNotice(
+            mode === "register-teacher"
+              ? "Təsdiq linki e-poçtuna göndərildi. Təsdiqdən sonra daxil ol — müəllim müraciətin adminə gedəcək."
+              : "Təsdiq linki e-poçtuna göndərildi. Linki açdıqdan sonra daxil ola bilərsən.",
+          );
           return;
         }
       } else {
@@ -79,14 +109,44 @@ export function AuthForm({ mode }: { mode: Mode }) {
         if (signInError) throw signInError;
       }
 
+      let profile = await apiRequest<MyProfile>("/profiles/me");
+
+      // Teacher signup may complete after email confirmation; finish the
+      // pending application from user_metadata on first authenticated request.
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      const meta = user?.user_metadata as
+        | { pending_teacher?: boolean; institution_name?: string }
+        | undefined;
+
+      if (
+        (mode === "register-teacher" || meta?.pending_teacher) &&
+        profile.role === "STUDENT"
+      ) {
+        profile = await apiRequest<MyProfile>("/profiles/me/request-teacher", {
+          method: "POST",
+          body: JSON.stringify({
+            institutionName:
+              institutionName || meta?.institution_name || "Müəssisə göstərilməyib",
+          }),
+        });
+
+        await supabase.auth.updateUser({
+          data: { pending_teacher: false },
+        });
+      }
+
       const next = searchParams.get("next");
-      // Only allow same-origin relative paths; bare "/" would bounce to the
-      // marketing landing and get redirected again by the proxy.
+      const roleHome = homePathFor(profile);
       const safeNext =
         next && next.startsWith("/") && !next.startsWith("//") && next !== "/"
           ? next
-          : "/dashboard";
-      router.replace(safeNext);
+          : roleHome;
+
+      router.replace(
+        profile.role === "TEACHER" && profile.accountStatus !== "ACTIVE" ? "/pending" : safeNext,
+      );
       router.refresh();
     } catch (cause) {
       setError(translateAuthError(cause));
@@ -113,7 +173,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <p className="mt-2 text-sm leading-6 text-slate-500">{copy.lead}</p>
 
           <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-            {mode === "register" && (
+            {(mode === "register" || mode === "register-teacher") && (
               <Field
                 icon={<UserRound className="size-4" aria-hidden="true" />}
                 label="Ad və soyad"
@@ -121,6 +181,18 @@ export function AuthForm({ mode }: { mode: Mode }) {
                 type="text"
                 autoComplete="name"
                 placeholder="Aylin Nəcəfova"
+                required
+              />
+            )}
+
+            {mode === "register-teacher" && (
+              <Field
+                icon={<Building2 className="size-4" aria-hidden="true" />}
+                label="Məktəb / kollec"
+                name="institutionName"
+                type="text"
+                autoComplete="organization"
+                placeholder="Bakı Texniki Kolleci"
                 required
               />
             )}
@@ -140,7 +212,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
               label="Şifrə"
               name="password"
               type="password"
-              autoComplete={mode === "register" ? "new-password" : "current-password"}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
               placeholder="••••••••"
               minLength={8}
               required
@@ -184,6 +256,24 @@ export function AuthForm({ mode }: { mode: Mode }) {
               {copy.switchLabel}
             </Link>
           </p>
+
+          {mode === "register" && (
+            <p className="mt-3 text-center text-xs text-slate-600">
+              Müəllimsən?{" "}
+              <Link href="/register/teacher" className="font-semibold text-red-300 hover:underline">
+                Müəllim kimi qeydiyyat
+              </Link>
+            </p>
+          )}
+
+          {mode === "register-teacher" && (
+            <p className="mt-3 text-center text-xs text-slate-600">
+              Şagird hesabı üçün{" "}
+              <Link href="/register" className="font-semibold text-emerald-300 hover:underline">
+                adi qeydiyyat
+              </Link>
+            </p>
+          )}
         </div>
       </div>
     </main>
