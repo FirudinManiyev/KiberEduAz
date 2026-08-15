@@ -19,7 +19,9 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
   max-width: 100%;
+  overflow-x: clip;
   background: var(--background);
 }
 
@@ -28,7 +30,7 @@ body {
   width: 100%;
   max-width: 100vw;
   min-width: 0;
-  overflow-x: hidden;
+  overflow-x: clip;
   background:
     radial-gradient(circle at 92% 3%, rgba(239, 68, 68, 0.15), transparent 31rem),
     radial-gradient(circle at 8% 38%, rgba(239, 68, 68, 0.07), transparent 28rem),
@@ -97,7 +99,7 @@ button, a { touch-action: manipulation; }
 .global-acid-background > div { position:absolute; inset:0; width:100%; height:100%; contain:size layout paint; }
 .global-acid-background canvas { filter:saturate(1.18) contrast(1.06); }
 .global-acid-background [data-webgl-unavailable="true"]::after { content:""; position:absolute; inset:0; background:radial-gradient(circle at 75% 25%,rgba(239,68,68,.34),transparent 31rem),radial-gradient(circle at 20% 70%,rgba(16,185,129,.18),transparent 27rem); }
-.page-transition { position:relative; z-index:10; isolation:isolate; display:flex; min-width:0; flex:1; flex-direction:column; animation:page-enter 480ms cubic-bezier(.22,1,.36,1) both; }
+.page-transition { position:relative; z-index:10; isolation:isolate; display:flex; width:100%; max-width:100%; min-width:0; flex:1; flex-direction:column; overflow-x:clip; animation:page-enter 480ms cubic-bezier(.22,1,.36,1) both; }
 .page-transition main { min-width:0; max-width:100vw; }
 .page-transition::after { content:""; pointer-events:none; position:fixed; top:71px; left:0; z-index:60; width:34%; height:2px; background:linear-gradient(90deg,transparent,#ef4444 34%,#f87171 62%,#34d399 86%,transparent); filter:drop-shadow(0 0 8px rgba(239,68,68,.75)); transform:translateX(-120%); animation:page-signal 760ms cubic-bezier(.22,1,.36,1) both; }
 .page-transition:not(.page-transition--nested)::before { content:""; pointer-events:none; position:fixed; top:18%; right:-13rem; z-index:-1; width:32rem; height:32rem; border-radius:50%; background:rgba(185,28,28,.1); filter:blur(105px); }
@@ -277,13 +279,46 @@ footer { z-index:10; }
 @keyframes toast-in { from{opacity:0;transform:translateY(16px) scale(.96)} to{opacity:1;transform:none} }
 @keyframes page-enter { from{opacity:.15;transform:translateY(16px) scale(.992);filter:blur(7px);clip-path:inset(0 0 7% 0)} to{opacity:1;transform:none;filter:blur(0);clip-path:inset(0)} }
 @keyframes page-enter-nested { from{opacity:.3;transform:translateX(10px);filter:blur(4px)} to{opacity:1;transform:none;filter:blur(0)} }
+@keyframes page-enter-mobile { from{opacity:.45;transform:translateY(6px)} to{opacity:1;transform:none} }
 @keyframes page-signal { 0%{transform:translateX(-120%);opacity:0} 20%{opacity:1} 100%{transform:translateX(410%);opacity:0} }
 @keyframes faq-answer-in { from{opacity:0;transform:translateY(-7px)} to{opacity:1;transform:none} }
 
 @media (max-width: 767px) {
-  .global-acid-background { opacity:.25; mix-blend-mode:normal; }
-  .global-acid-background canvas { filter:saturate(1.05); }
-  .page-transition::after { width:58%; }
+  .global-acid-background { opacity:.2; mix-blend-mode:normal; }
+  .global-acid-background canvas { filter:none; }
+  .page-transition { animation-name:page-enter-mobile; animation-duration:240ms; }
+  .page-transition::after { width:58%; filter:none; animation-duration:520ms; }
+  .page-transition:not(.page-transition--nested)::before { display:none; }
+  .page-transition--nested { animation-name:page-enter-mobile; animation-duration:200ms; }
+  .site-loader__orb { filter:blur(55px); }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .brand-mark__scan,
+  .hero-scan::after,
+  .card-scanline,
+  .button-sheen { display:none; }
+
+  .interactive-card { transform-style:flat; }
+  .interactive-card:hover,
+  .hero-mini-stat:hover,
+  .metric-card:hover,
+  .quick-link:hover,
+  .achievement-banner:hover,
+  .profile-rank-card:hover,
+  .roadmap-score-card:hover,
+  .contact-form:hover,
+  .lesson-copy li:hover,
+  .leader-row:hover,
+  .primary-action:hover,
+  .secondary-action:hover { transform:none; }
+
+  .interactive-card:hover .card-radar,
+  .interactive-card:hover .room-icon-shell__ring,
+  .group:hover .brand-mark,
+  .group:hover .stat-icon,
+  .group:hover .notification-icon,
+  .leader-row:hover .avatar { transform:none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

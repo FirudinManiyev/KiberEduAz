@@ -3,7 +3,7 @@ import { test } from "node:test";
 
 import { getAcidRenderProfile } from "../src/lib/effects/acid-render-profile.ts";
 
-test("narrow coarse-pointer screens use the low-cost Acid Squares profile", () => {
+test("narrow coarse-pointer screens render one low-cost Acid Squares frame", () => {
   assert.deepEqual(
     getAcidRenderProfile({
       width: 390,
@@ -17,7 +17,7 @@ test("narrow coarse-pointer screens use the low-cost Acid Squares profile", () =
       dpr: 1,
       blur: 0,
       mouseInteraction: false,
-      animate: true,
+      animate: false,
     },
   );
 });

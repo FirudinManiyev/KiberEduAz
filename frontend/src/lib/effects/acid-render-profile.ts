@@ -29,7 +29,7 @@ export function getAcidRenderProfile({
       dpr: 1,
       blur: 0,
       mouseInteraction: false,
-      animate: !reducedMotion,
+      animate: false,
     };
   }
 
@@ -42,4 +42,3 @@ export function getAcidRenderProfile({
     animate: true,
   };
 }
-
