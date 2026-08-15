@@ -1,7 +1,7 @@
 "use client";
 
-import { ChevronDown, Search, ShieldQuestion } from "lucide-react";
-import { useMemo, useState } from "react";
+import { ChevronDown, ShieldQuestion } from "lucide-react";
+import { useState } from "react";
 import {
   FAQ_CATEGORIES,
   FAQ_ITEMS,
@@ -12,22 +12,13 @@ import {
 const ALL: FaqFilter = "Hamısı";
 
 export function FaqBrowser() {
-  const [query, setQuery] = useState("");
   const [category, setCategory] = useState<FaqFilter>(ALL);
-  const visibleItems = useMemo(
-    () => filterFaqItems(FAQ_ITEMS, query, category),
-    [category, query],
-  );
+  const visibleItems = filterFaqItems(FAQ_ITEMS, category);
 
   return (
     <div>
-      <div className="rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 p-4 shadow-xl backdrop-blur sm:p-5">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-[18px] -translate-y-1/2 text-slate-500" aria-hidden="true" />
-          <label htmlFor="faq-search" className="sr-only">FAQ daxilində axtar</label>
-          <input id="faq-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Məsələn: progress, şifrə, müəllim…" className="h-12 w-full rounded-xl border border-white/[0.08] bg-black/20 pl-11 pr-4 text-sm text-white outline-none transition-all placeholder:text-slate-600 focus:border-emerald-300/35 focus:ring-2 focus:ring-emerald-300/10" />
-        </div>
-        <div className="mt-3 flex max-w-full gap-1 overflow-x-auto pb-1" role="group" aria-label="FAQ kateqoriyası">
+      <div className="rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 p-3 shadow-xl backdrop-blur sm:p-4">
+        <div className="flex max-w-full gap-1 overflow-x-auto pb-1" role="group" aria-label="FAQ kateqoriyası">
           {[ALL, ...FAQ_CATEGORIES].map((item) => (
             <button key={item} type="button" onClick={() => setCategory(item)} aria-pressed={category === item} className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${category === item ? "bg-red-400/12 text-red-100 ring-1 ring-red-300/20" : "text-slate-500 hover:bg-white/[0.035] hover:text-slate-200"}`}>
               {item}
@@ -37,8 +28,8 @@ export function FaqBrowser() {
       </div>
 
       <div className="mb-4 mt-6 flex items-center justify-between text-xs text-slate-500" aria-live="polite">
-        <span>{visibleItems.length} cavab tapıldı</span>
-        {(query || category !== ALL) && <button type="button" onClick={() => { setQuery(""); setCategory(ALL); }} className="font-semibold text-red-300 transition-colors hover:text-red-200">Filtrləri təmizlə</button>}
+        <span>{visibleItems.length} cavab göstərilir</span>
+        {category !== ALL && <button type="button" onClick={() => setCategory(ALL)} className="font-semibold text-red-300 transition-colors hover:text-red-200">Bütün sualları göstər</button>}
       </div>
 
       {visibleItems.length > 0 ? (
@@ -56,10 +47,9 @@ export function FaqBrowser() {
         </div>
       ) : (
         <div className="grid min-h-64 place-items-center rounded-2xl border border-dashed border-white/[0.1] bg-white/[0.015] p-8 text-center">
-          <div><ShieldQuestion className="mx-auto size-8 text-slate-600" /><h2 className="mt-4 text-base font-semibold text-slate-200">Uyğun cavab tapılmadı</h2><p className="mt-2 text-sm text-slate-500">Axtarış sözünü qısalt və ya başqa kateqoriya seç.</p></div>
+          <div><ShieldQuestion className="mx-auto size-8 text-slate-600" /><h2 className="mt-4 text-base font-semibold text-slate-200">Bu kateqoriya hələ boşdur</h2><p className="mt-2 text-sm text-slate-500">Başqa kateqoriya seçərək suallara bax.</p></div>
         </div>
       )}
     </div>
   );
 }
-

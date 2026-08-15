@@ -32,17 +32,9 @@ export const FAQ_ITEMS: readonly FaqItem[] = [
 
 export function filterFaqItems(
   items: readonly FaqItem[],
-  query: string,
   category: FaqFilter,
 ): FaqItem[] {
-  const normalizedQuery = query.trim().toLocaleLowerCase("az");
-
-  return items.filter((item) => {
-    const matchesCategory = category === "Hamısı" || item.category === category;
-    const matchesQuery =
-      !normalizedQuery ||
-      `${item.question} ${item.answer}`.toLocaleLowerCase("az").includes(normalizedQuery);
-    return matchesCategory && matchesQuery;
-  });
+  return category === "Hamısı"
+    ? [...items]
+    : items.filter((item) => item.category === category);
 }
-
