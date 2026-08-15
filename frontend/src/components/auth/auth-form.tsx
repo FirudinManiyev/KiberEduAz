@@ -12,6 +12,7 @@ import {
   UserRound,
 } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { toast } from "sonner";
 import { Logo } from "@/components/brand/logo";
 import { apiRequest } from "@/lib/api/client";
 import type { MyProfile } from "@/lib/api/types";
@@ -74,10 +75,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
     const password = String(form.get("password") ?? "");
     const fullName = String(form.get("fullName") ?? "").trim();
     const institutionName = String(form.get("institutionName") ?? "").trim();
+    const toastId = "auth-submit";
 
-    const supabase = createSupabaseBrowserClient();
+    toast.loading(mode === "login" ? "Hesaba daxil olunur…" : "Hesab yaradılır…", {
+      id: toastId,
+    });
 
     try {
+      const supabase = createSupabaseBrowserClient();
+
       if (mode === "register" || mode === "register-teacher") {
         const { data, error: signUpError } = await supabase.auth.signUp({
           email,
@@ -95,11 +101,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         if (signUpError) throw signUpError;
 
         if (!data.session) {
-          setNotice(
+          const noticeMessage =
             mode === "register-teacher"
               ? "Təsdiq linki e-poçtuna göndərildi. Təsdiqdən sonra daxil ol — müəllim müraciətin adminə gedəcək."
-              : "Təsdiq linki e-poçtuna göndərildi. Linki açdıqdan sonra daxil ola bilərsən.",
-          );
+              : "Təsdiq linki e-poçtuna göndərildi. Linki açdıqdan sonra daxil ola bilərsən.";
+          setNotice(noticeMessage);
+          toast.success("Təsdiq linki göndərildi", {
+            id: toastId,
+            description: "Davam etmək üçün e-poçt qutunu yoxla.",
+          });
           return;
         }
       } else {
@@ -146,9 +156,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       router.replace(
         profile.role === "TEACHER" && profile.accountStatus !== "ACTIVE" ? "/pending" : safeNext,
       );
+      toast.success(mode === "login" ? "Hesaba daxil oldun" : "Hesab yaradıldı", {
+        id: toastId,
+        description: "Şəxsi panelin hazırlanır.",
+      });
       router.refresh();
     } catch (cause) {
-      setError(translateAuthError(cause));
+      const message = translateAuthError(cause);
+      setError(message);
+      toast.error(message, { id: toastId });
     } finally {
       setPending(false);
     }

@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 import type { AnswerResult, RoomDetail } from "@/lib/api/types";
 
@@ -98,6 +99,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
       error: null,
       wrongOptionId: null,
     });
+    toast.loading("Cavab yoxlanılır…", { id: "answer-check" });
 
     try {
       const result = await apiRequest<AnswerResult>(
@@ -119,12 +121,28 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
           current.includes(result.task.id) ? current : [...current, result.task.id],
         );
       }
+
+      if (result.isCorrect) {
+        toast.success(result.task.completed ? "Task tamamlandı" : "Cavab doğrudur", {
+          id: "answer-check",
+          description: result.task.completed
+            ? "Progress hesabında saxlanıldı."
+            : "Növbəti addıma davam edə bilərsən.",
+        });
+      } else {
+        toast.error("Cavab yanlışdır", {
+          id: "answer-check",
+          description: "İzahı nəzərdən keçir və yenidən yoxla.",
+        });
+      }
     } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "Cavab göndərilə bilmədi";
       patchQuestion(questionId, {
         pending: false,
         selectedOptionId: null,
-        error: cause instanceof Error ? cause.message : "Cavab göndərilə bilmədi",
+        error: message,
       });
+      toast.error(message, { id: "answer-check" });
     }
   }
 

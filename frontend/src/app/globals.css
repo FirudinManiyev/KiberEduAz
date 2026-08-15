@@ -209,7 +209,6 @@ button, a { touch-action: manipulation; }
 .panel-input:focus { border-color:rgba(52,211,153,.35); box-shadow:0 0 0 3px rgba(52,211,153,.07); }
 .profile-rank-card { background:radial-gradient(circle at 80% 10%,rgba(239,68,68,.19),transparent 16rem),linear-gradient(145deg,rgba(52,211,153,.04),#1a1c1e); transition:transform 350ms ease,border-color 350ms ease; }
 .profile-rank-card:hover { transform:translateY(-4px); border-color:rgba(52,211,153,.23); }
-.save-toast { position:fixed; right:1.25rem; bottom:1.25rem; z-index:80; display:flex; min-width:270px; align-items:center; gap:.75rem; border:1px solid rgba(52,211,153,.18); border-radius:.9rem; background:rgba(7,11,10,.94); padding:.8rem; box-shadow:0 20px 70px rgba(0,0,0,.45),0 0 35px rgba(52,211,153,.06); backdrop-filter:blur(18px); animation:toast-in 300ms cubic-bezier(.22,1,.36,1); }
 .notification-icon { display:grid; width:2.55rem; height:2.55rem; flex-shrink:0; place-items:center; border:1px solid; border-radius:.8rem; transition:transform 300ms ease; }
 .group:hover .notification-icon { transform:rotate(-5deg) scale(1.05); }
 .notification-icon--training { border-color:rgba(52,211,153,.16); background:rgba(52,211,153,.07); color:#6ee7b7; }
@@ -276,7 +275,6 @@ footer { z-index:10; }
 @keyframes hero-scan { from{transform:translateY(-100%)} to{transform:translateY(520%)} }
 @keyframes ticker { to{transform:translateX(-50%)} }
 @keyframes card-scan { from{transform:translateY(-100%)} to{transform:translateY(650%)} }
-@keyframes toast-in { from{opacity:0;transform:translateY(16px) scale(.96)} to{opacity:1;transform:none} }
 @keyframes page-enter { from{opacity:.15;transform:translateY(16px) scale(.992);filter:blur(7px);clip-path:inset(0 0 7% 0)} to{opacity:1;transform:none;filter:blur(0);clip-path:inset(0)} }
 @keyframes page-enter-nested { from{opacity:.3;transform:translateX(10px);filter:blur(4px)} to{opacity:1;transform:none;filter:blur(0)} }
 @keyframes page-enter-mobile { from{opacity:.45;transform:translateY(6px)} to{opacity:1;transform:none} }

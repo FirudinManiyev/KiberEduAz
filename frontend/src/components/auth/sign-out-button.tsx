@@ -2,6 +2,7 @@
 
 import { Loader2, LogOut } from "lucide-react";
 import { useFormStatus } from "react-dom";
+import { toast } from "sonner";
 
 type SignOutButtonProps = {
   variant?: "header" | "mobile" | "panel";
@@ -9,8 +10,13 @@ type SignOutButtonProps = {
 };
 
 export function SignOutButton({ variant = "panel", onAction }: SignOutButtonProps) {
+  function handleSubmit() {
+    toast.loading("Hesabdan çıxılır…", { id: "sign-out" });
+    onAction?.();
+  }
+
   return (
-    <form action="/auth/signout" method="post" onSubmit={onAction} className={variant === "mobile" ? "w-full" : undefined}>
+    <form action="/auth/signout" method="post" onSubmit={handleSubmit} className={variant === "mobile" ? "w-full" : undefined}>
       <SubmitButton variant={variant} />
     </form>
   );
@@ -33,4 +39,3 @@ function SubmitButton({ variant }: { variant: NonNullable<SignOutButtonProps["va
     </button>
   );
 }
-

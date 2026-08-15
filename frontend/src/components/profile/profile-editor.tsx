@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { AlertTriangle, Check, Loader2, Save, ShieldCheck, Sparkles } from "lucide-react";
 import { FormEvent, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 import type { MyProfile, Rank } from "@/lib/api/types";
 
@@ -54,13 +55,13 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
   const [avatarKey, setAvatarKey] = useState(profile.avatarKey ?? AVATARS[0].key);
   const [notifications, setNotifications] = useState(profile.notifications);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSaving(true);
+    toast.loading("Profil saxlanılır…", { id: "profile-save" });
 
     const form = new FormData(event.currentTarget);
     const text = (name: string) => {
@@ -86,11 +87,15 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
         }),
       });
 
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2600);
+      toast.success("Profil yeniləndi", {
+        id: "profile-save",
+        description: "Dəyişikliklər uğurla saxlanıldı.",
+      });
       startTransition(() => router.refresh());
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Profil saxlanıla bilmədi");
+      const message = cause instanceof Error ? cause.message : "Profil saxlanıla bilmədi";
+      setError(message);
+      toast.error(message, { id: "profile-save" });
     } finally {
       setSaving(false);
     }
@@ -163,8 +168,6 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
           <span className="button-sheen" />
         </button>
       </aside>
-
-      {saved && <div className="save-toast" role="status"><span className="grid size-8 place-items-center rounded-lg bg-emerald-400 text-emerald-950"><Check className="size-4" strokeWidth={3} /></span><div><p className="text-xs font-semibold text-white">Profil yeniləndi</p><p className="mt-0.5 text-[10px] text-slate-500">Dəyişikliklər bazaya yazıldı.</p></div></div>}
     </form>
   );
 }

@@ -15,6 +15,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { LessonMarkdown } from "@/components/room/lesson-markdown";
 import {
   LOCAL_PROGRESS_KEY,
@@ -73,12 +74,14 @@ export function LocalLessonPlayer({ room }: { room: LocalRoomDetail }) {
     [currentTask],
   );
 
-  function persist(next: LocalProgressState) {
+  function persist(next: LocalProgressState): boolean {
     setProgressState(next);
     try {
       window.localStorage.setItem(LOCAL_PROGRESS_KEY, serializeLocalProgress(next));
+      return true;
     } catch {
       // Keep progress for the current page even if browser storage is unavailable.
+      return false;
     }
   }
 
@@ -93,20 +96,40 @@ export function LocalLessonPlayer({ room }: { room: LocalRoomDetail }) {
   function markQuestion(questionId: string, points: number) {
     if (!currentTask || solvedQuestionIds.includes(questionId) || pendingId) return;
     setPendingId(questionId);
+    toast.loading("Cavab yoxlanılır…", { id: "answer-check" });
     window.setTimeout(() => {
-      persist(
+      const stored = persist(
         solveLocalQuestion(progressState, room.slug, currentTask.id, questionId, points),
       );
       setPendingId(null);
+      if (stored) {
+        toast.success("Cavab tamamlandı", {
+          id: "answer-check",
+          description: `${points} XP progress-ə əlavə edildi.`,
+        });
+      } else {
+        toast.warning("Cavab yalnız bu sessiyada saxlanıldı", { id: "answer-check" });
+      }
     }, 260);
   }
 
   function markTaskComplete() {
     if (!currentTask || currentCompleted || pendingId) return;
     setPendingId(currentTask.id);
+    toast.loading("Progress saxlanılır…", { id: "lesson-save" });
     window.setTimeout(() => {
-      persist(completeLocalTask(progressState, room.slug, currentTask.id, completionPoints));
+      const stored = persist(
+        completeLocalTask(progressState, room.slug, currentTask.id, completionPoints),
+      );
       setPendingId(null);
+      if (stored) {
+        toast.success("Task tamamlandı", {
+          id: "lesson-save",
+          description: "Room progress-i bu cihazda saxlanıldı.",
+        });
+      } else {
+        toast.warning("Progress yalnız bu sessiyada saxlanıldı", { id: "lesson-save" });
+      }
     }, 320);
   }
 
@@ -234,4 +257,3 @@ export function LocalLessonPlayer({ room }: { room: LocalRoomDetail }) {
     </section>
   );
 }
-
