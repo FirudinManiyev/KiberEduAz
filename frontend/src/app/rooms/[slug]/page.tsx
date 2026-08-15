@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -12,17 +13,25 @@ import {
   Zap,
 } from "lucide-react";
 import { LessonPlayer } from "@/components/room/lesson-player";
+import { LocalLessonPlayer } from "@/components/room/local-lesson-player";
 import { ApiError, apiFetch } from "@/lib/api/server";
 import { DIFFICULTY_LABELS, ROOM_TYPE_LABELS } from "@/lib/api/labels";
 import type { RoomDetail } from "@/lib/api/types";
+import { loadLocalRoom } from "@/lib/content/markdown";
+import { decorateApiRoomDetail } from "@/lib/content/rooms";
+import type { LearningRoomDetail } from "@/lib/content/types";
 
 type RoomPageProps = {
   params: Promise<{ slug: string }>;
 };
 
-async function loadRoom(slug: string): Promise<RoomDetail> {
+async function loadRoom(slug: string): Promise<LearningRoomDetail> {
+  const localRoom = await loadLocalRoom(slug);
+  if (localRoom) return localRoom;
+
   try {
-    return await apiFetch<RoomDetail>(`/rooms/${encodeURIComponent(slug)}`);
+    const apiRoom = await apiFetch<RoomDetail>(`/rooms/${encodeURIComponent(slug)}`);
+    return decorateApiRoomDetail(apiRoom);
   } catch (cause) {
     if (cause instanceof ApiError && cause.status === 404) notFound();
     throw cause;
@@ -31,6 +40,8 @@ async function loadRoom(slug: string): Promise<RoomDetail> {
 
 export async function generateMetadata({ params }: RoomPageProps): Promise<Metadata> {
   const { slug } = await params;
+  const localRoom = await loadLocalRoom(slug);
+  if (localRoom) return { title: localRoom.title, description: localRoom.description };
 
   try {
     const room = await apiFetch<RoomDetail>(`/rooms/${encodeURIComponent(slug)}`);
@@ -87,8 +98,24 @@ export default async function RoomPage({ params }: RoomPageProps) {
               </div>
             </div>
 
-            <aside className="rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 p-5 shadow-2xl backdrop-blur sm:p-6">
-              <div className="flex items-center justify-between">
+            <aside className="overflow-hidden rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 shadow-2xl backdrop-blur">
+              <div className="relative aspect-[16/9] overflow-hidden border-b border-white/[0.07] bg-[#111416]">
+                <Image
+                  src={room.image}
+                  alt={room.imageAlt}
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 380px, 100vw"
+                  className="object-cover transition-transform duration-700 hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#171a1d] via-transparent to-transparent" />
+                <span className="absolute bottom-3 left-3 rounded-full border border-white/10 bg-[#121416]/85 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-slate-200 backdrop-blur">
+                  {room.progressMode === "local" ? "Bu cihazda saxlanılır" : "Hesabla sinxronlaşır"}
+                </span>
+              </div>
+
+              <div className="p-5 sm:p-6">
+                <div className="flex items-center justify-between">
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-500">Path / Module</p>
                   <p className="mt-1.5 text-sm font-semibold text-slate-200">{room.path.title}</p>
@@ -99,29 +126,30 @@ export default async function RoomPage({ params }: RoomPageProps) {
                 </span>
               </div>
 
-              <div className="my-5 h-px bg-white/[0.07]" />
-              <p className="text-xs font-semibold text-slate-300">Bu Room-dan sonra bacaracaqsan:</p>
-              <ul className="mt-3 space-y-2.5">
-                {room.objectives.map((objective) => (
-                  <li key={objective} className="flex gap-2.5 text-xs leading-5 text-slate-500">
-                    <CheckCircle2 className={`mt-0.5 size-3.5 shrink-0 ${isGreen ? "text-emerald-400" : "text-red-400"}`} aria-hidden="true" />
-                    {objective}
-                  </li>
-                ))}
-              </ul>
+                <div className="my-5 h-px bg-white/[0.07]" />
+                <p className="text-xs font-semibold text-slate-300">Bu Room-dan sonra bacaracaqsan:</p>
+                <ul className="mt-3 space-y-2.5">
+                  {room.objectives.map((objective) => (
+                    <li key={objective} className="flex gap-2.5 text-xs leading-5 text-slate-500">
+                      <CheckCircle2 className={`mt-0.5 size-3.5 shrink-0 ${isGreen ? "text-emerald-400" : "text-red-400"}`} aria-hidden="true" />
+                      {objective}
+                    </li>
+                  ))}
+                </ul>
 
-              {room.sourceFile && (
-                <div className="mt-5 flex items-center gap-2 rounded-xl border border-white/[0.06] bg-black/15 px-3 py-2.5 text-[10px] text-slate-600">
-                  <FileText className="size-3.5 shrink-0" aria-hidden="true" />
-                  Mənbə: {room.sourceFile}
-                </div>
-              )}
+                {room.sourceFile && (
+                  <div className="mt-5 flex items-center gap-2 rounded-xl border border-white/[0.06] bg-black/15 px-3 py-2.5 text-[10px] text-slate-600">
+                    <FileText className="size-3.5 shrink-0" aria-hidden="true" />
+                    Mənbə: {room.sourceFile}
+                  </div>
+                )}
+              </div>
             </aside>
           </div>
         </div>
       </section>
 
-      <LessonPlayer room={room} />
+      {room.progressMode === "local" ? <LocalLessonPlayer room={room} /> : <LessonPlayer room={room} />}
     </main>
   );
 }

@@ -2,6 +2,10 @@
 
 import { useEffect, useRef } from "react";
 import { Mesh, Program, Renderer, RenderTarget, Triangle } from "ogl";
+import {
+  getAcidRenderProfile,
+  type AcidRenderProfile,
+} from "@/lib/effects/acid-render-profile";
 
 export type AcidSquaresDetail = "low" | "medium" | "high";
 
@@ -175,6 +179,7 @@ void main() {
 type AcidSquaresContext = {
   program: InstanceType<typeof Program>;
   render: () => void;
+  profile: AcidRenderProfile;
 };
 
 const contextMap = new WeakMap<HTMLDivElement, AcidSquaresContext>();
@@ -207,6 +212,9 @@ export default function AcidSquares({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mouseTarget = useRef<[number, number]>([0, 0]);
   const mouseCurrent = useRef<[number, number]>([0, 0]);
+  const detailRef = useRef(detail);
+  const requestedMouseInteractionRef = useRef(mouseInteraction);
+  const requestedBlurRef = useRef(blur);
   const enableMouseRef = useRef(mouseInteraction);
   const mouseStrengthRef = useRef(mouseStrength);
   const mouseActive = useRef(0);
@@ -219,8 +227,14 @@ export default function AcidSquares({
     const container = containerRef.current;
     if (!container) return;
 
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const finePointer = window.matchMedia("(pointer: fine)").matches;
+    const reducedMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const coarsePointerQuery = window.matchMedia("(pointer: coarse)");
+    let activeProfile = getAcidRenderProfile({
+      width: window.innerWidth,
+      coarsePointer: coarsePointerQuery.matches,
+      reducedMotion: reducedMotionQuery.matches,
+      devicePixelRatio: window.devicePixelRatio,
+    });
     let renderer: InstanceType<typeof Renderer>;
 
     try {
@@ -229,7 +243,7 @@ export default function AcidSquares({
         alpha: true,
         premultipliedAlpha: true,
         antialias: false,
-        dpr: reducedMotion ? 1 : Math.min(window.devicePixelRatio || 1, 1.35),
+        dpr: activeProfile.dpr,
       });
     } catch {
       container.dataset.webglUnavailable = "true";
@@ -264,7 +278,7 @@ export default function AcidSquares({
         uContrast: { value: 1 },
         uBrightness: { value: 1 },
         uOpacity: { value: 1 },
-        uSteps: { value: 32 },
+        uSteps: { value: activeProfile.steps },
         uColor1: { value: new Float32Array([1, 1, 1]) },
         uColor2: { value: new Float32Array([1, 1, 1]) },
         uColor3: { value: new Float32Array([1, 1, 1]) },
@@ -340,9 +354,25 @@ export default function AcidSquares({
       }
     };
 
-    contextMap.set(container, { program, render: renderFrame });
+    const context: AcidSquaresContext = {
+      program,
+      render: renderFrame,
+      profile: activeProfile,
+    };
+    contextMap.set(container, context);
 
     const setSize = () => {
+      activeProfile = getAcidRenderProfile({
+        width: window.innerWidth,
+        coarsePointer: coarsePointerQuery.matches,
+        reducedMotion: reducedMotionQuery.matches,
+        devicePixelRatio: window.devicePixelRatio,
+      });
+      context.profile = activeProfile;
+      renderer.dpr = activeProfile.dpr;
+      primaryUniforms.uSteps.value = Math.min(DETAIL_STEPS[detailRef.current], activeProfile.steps);
+      enableMouseRef.current = requestedMouseInteractionRef.current && activeProfile.mouseInteraction;
+      blurRef.current = activeProfile.blur === 0 ? 0 : requestedBlurRef.current;
       const rect = container.getBoundingClientRect();
       renderer.setSize(Math.max(1, Math.floor(rect.width)), Math.max(1, Math.floor(rect.height)));
       const width = gl.drawingBufferWidth;
@@ -373,7 +403,9 @@ export default function AcidSquares({
     const handlePointerLeave = () => {
       mouseActiveTarget.current = 0;
     };
-    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    if (!coarsePointerQuery.matches) {
+      window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    }
     window.addEventListener("blur", handlePointerLeave);
 
     let animationFrame = 0;
@@ -390,10 +422,10 @@ export default function AcidSquares({
       const mouse = primaryUniforms.uMouse.value as Float32Array;
       mouse[0] = current[0];
       mouse[1] = current[1];
-      const activeTarget = enableMouseRef.current && finePointer ? mouseActiveTarget.current : 0;
+      const activeTarget = enableMouseRef.current ? mouseActiveTarget.current : 0;
       mouseActive.current += 0.05 * (activeTarget - mouseActive.current);
       primaryUniforms.uMouseActive.value = mouseActive.current;
-      primaryUniforms.uEnableMouse.value = enableMouseRef.current && finePointer ? 1 : 0;
+      primaryUniforms.uEnableMouse.value = enableMouseRef.current ? 1 : 0;
       primaryUniforms.uMouseStrength.value = mouseStrengthRef.current;
       postUniforms.iTime.value = primaryUniforms.iTime.value;
       renderFrame();
@@ -401,7 +433,7 @@ export default function AcidSquares({
     };
 
     const tryStart = () => {
-      if (!reducedMotion && isVisible && isPageVisible && animationFrame === 0) {
+      if (activeProfile.animate && isVisible && isPageVisible && animationFrame === 0) {
         animationFrame = window.requestAnimationFrame(loop);
       }
     };
@@ -432,7 +464,9 @@ export default function AcidSquares({
       resizeObserver.disconnect();
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", handleVisibility);
-      window.removeEventListener("pointermove", handlePointerMove);
+      if (!coarsePointerQuery.matches) {
+        window.removeEventListener("pointermove", handlePointerMove);
+      }
       window.removeEventListener("blur", handlePointerLeave);
       contextMap.delete(container);
 
@@ -467,7 +501,7 @@ export default function AcidSquares({
     uniforms.uContrast.value = contrast;
     uniforms.uBrightness.value = brightness;
     uniforms.uOpacity.value = opacity;
-    uniforms.uSteps.value = DETAIL_STEPS[detail];
+    uniforms.uSteps.value = Math.min(DETAIL_STEPS[detail], context.profile.steps);
     uniforms.uMouseRadius.value = mouseRadius;
 
     const colors = [
@@ -483,9 +517,12 @@ export default function AcidSquares({
       target[2] = color[2];
     });
 
-    enableMouseRef.current = mouseInteraction;
+    detailRef.current = detail;
+    requestedMouseInteractionRef.current = mouseInteraction;
+    requestedBlurRef.current = blur;
+    enableMouseRef.current = mouseInteraction && context.profile.mouseInteraction;
     mouseStrengthRef.current = mouseStrength;
-    blurRef.current = blur;
+    blurRef.current = context.profile.blur === 0 ? 0 : blur;
     grainRef.current = grain;
     grainIntensityRef.current = grainIntensity;
     context.render();

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Award, Flame, Target } from "lucide-react";
-import { ProfileEditor, SignOutButton } from "@/components/profile/profile-editor";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { ProfileEditor } from "@/components/profile/profile-editor";
 import { apiFetch } from "@/lib/api/server";
 import type { MyProfile, ProgressSummary } from "@/lib/api/types";
 

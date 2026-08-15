@@ -8,6 +8,7 @@ const PUBLIC_PREFIXES = [
   "/register",
   "/auth",
   "/contact",
+  "/faq",
   "/opengraph-image",
   "/robots.txt",
   "/sitemap.xml",

@@ -15,10 +15,9 @@ import { FormEvent, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { apiRequest } from "@/lib/api/client";
 import type { MyProfile } from "@/lib/api/types";
+import { authPendingLabel, type AuthMode } from "@/lib/auth/copy";
 import { homePathFor } from "@/lib/auth/home-path";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-
-type Mode = "login" | "register" | "register-teacher";
 
 const COPY = {
   login: {
@@ -50,7 +49,7 @@ const COPY = {
   },
 } as const;
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({ mode }: { mode: AuthMode }) {
   const copy = COPY[mode];
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -237,8 +236,8 @@ export function AuthForm({ mode }: { mode: Mode }) {
               </p>
             )}
 
-            <button type="submit" disabled={pending} className="primary-action group w-full disabled:opacity-60">
-              <span className="relative z-10">{copy.submit}</span>
+            <button type="submit" disabled={pending} className="primary-action group w-full disabled:opacity-60" aria-live="polite">
+              <span className="relative z-10">{pending ? authPendingLabel(mode) : copy.submit}</span>
               <span className="relative z-10">
                 {pending ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden="true" />

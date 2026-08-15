@@ -3,10 +3,10 @@
 import { Search, ShieldX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { RoomCard } from "@/components/room/room-card";
-import type { RoomSummary } from "@/lib/api/types";
+import type { LearningRoomSummary } from "@/lib/content/types";
 
 type RoomBrowserProps = {
-  rooms: RoomSummary[];
+  rooms: LearningRoomSummary[];
 };
 
 const ALL = "Hamısı";
@@ -29,7 +29,7 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
       const matchesFilter = filter === ALL || room.category === filter;
       const matchesQuery =
         normalizedQuery.length === 0 ||
-        [room.title, room.shortTitle, room.description, room.path, room.module]
+        [room.title, room.shortTitle, room.description, room.path, room.module, room.track]
           .join(" ")
           .toLocaleLowerCase("az")
           .includes(normalizedQuery);
@@ -73,7 +73,7 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
         </div>
       </div>
 
-      <div className="mb-4 flex items-center justify-between text-xs text-slate-500" aria-live="polite">
+      <div className="mb-4 flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between" aria-live="polite">
         <span>{visibleRooms.length} Room göstərilir</span>
         <span>Məzmun səviyyəsinə görə sıralanıb</span>
       </div>
