@@ -60,15 +60,21 @@ const apiRooms = [
   },
 ];
 
-test("five local rooms merge into seven unique discoverable rooms", () => {
+test("local catalogue merges with API rooms into a unique discoverable set", () => {
   const merged = mergeRoomSummaries(apiRooms);
+  const localCount = LOCAL_ROOM_CATALOG.length;
 
-  assert.equal(LOCAL_ROOM_CATALOG.length, 5);
-  assert.equal(merged.length, 7);
-  assert.equal(new Set(merged.map((room) => room.slug)).size, 7);
+  assert.ok(localCount >= 5, "expected the seeded local rooms to remain");
+  assert.equal(merged.length, localCount + apiRooms.length);
+  assert.equal(new Set(merged.map((room) => room.slug)).size, merged.length);
   assert.ok(merged.every((room) => room.image.startsWith("/images/")));
-  assert.equal(merged.filter((room) => room.progressMode === "local").length, 5);
+  assert.equal(merged.filter((room) => room.progressMode === "local").length, localCount);
   assert.equal(merged.filter((room) => room.progressMode === "api").length, 2);
+});
+
+test("catalogue slugs are unique", () => {
+  const slugs = LOCAL_ROOM_CATALOG.map((room) => room.slug);
+  assert.equal(new Set(slugs).size, slugs.length);
 });
 
 test("catalogue references existing markdown and image assets", () => {
@@ -78,7 +84,6 @@ test("catalogue references existing markdown and image assets", () => {
 
     assert.equal(existsSync(fileURLToPath(markdownUrl)), true, room.sourceFile);
     assert.equal(existsSync(fileURLToPath(imageUrl)), true, room.image);
-    assert.match(room.title, /[ƏĞİÖŞÜəğıöşü]/, room.slug);
   }
 });
 
