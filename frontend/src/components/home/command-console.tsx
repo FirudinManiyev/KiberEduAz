@@ -34,7 +34,17 @@ const scenarios = {
 
 type ScenarioKey = keyof typeof scenarios;
 
-export function CommandConsole() {
+type CommandConsoleProps = {
+  /// The public landing page cannot send visitors into the auth-walled Room
+  /// browser, so the footer link is configurable.
+  ctaHref?: string;
+  ctaLabel?: string;
+};
+
+export function CommandConsole({
+  ctaHref = "/rooms",
+  ctaLabel = "Tam missiyalara keç",
+}: CommandConsoleProps = {}) {
   const [scenarioKey, setScenarioKey] = useState<ScenarioKey>("logs");
   const [selected, setSelected] = useState<number | null>(null);
   const scenario = scenarios[scenarioKey];
@@ -136,8 +146,8 @@ export function CommandConsole() {
           </div>
         )}
 
-        <Link href="/rooms" prefetch className="group mt-5 flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-xs font-semibold text-slate-300 transition-all hover:border-emerald-300/20 hover:bg-emerald-300/[0.055] hover:text-emerald-200">
-          Tam missiyalara keç
+        <Link href={ctaHref} prefetch className="group mt-5 flex items-center justify-between rounded-xl border border-white/[0.07] bg-white/[0.025] px-4 py-3 text-xs font-semibold text-slate-300 transition-all hover:border-emerald-300/20 hover:bg-emerald-300/[0.055] hover:text-emerald-200">
+          {ctaLabel}
           <span className="flex items-center gap-2"><LinkLoadingIndicator /><span className="transition-transform group-hover:translate-x-1">→</span></span>
         </Link>
       </div>

@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  // Scoped to src so the emitted entrypoint stays at dist/main.js. Including
+  // prisma/**/*.ts here would widen the TypeScript rootDir and nest the build
+  // under dist/src, breaking `npm run start:prod`. The seed script is run by
+  // ts-node against tsconfig.json, so it does not need to be compiled.
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.spec.ts"]
+}
