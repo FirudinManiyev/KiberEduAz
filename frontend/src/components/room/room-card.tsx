@@ -1,12 +1,15 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowUpRight, Clock3, Crosshair, FileCheck2, ListChecks, Shield, Zap } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { DIFFICULTY_LABELS, ROOM_TYPE_LABELS } from "@/lib/api/labels";
 import type { RoomSummary } from "@/lib/api/types";
+import { API_ROOM_PRESENTATION } from "@/lib/content/catalog";
+import type { LearningRoomSummary } from "@/lib/content/types";
 
 type RoomCardProps = {
-  room: RoomSummary;
+  room: RoomSummary | LearningRoomSummary;
   featured?: boolean;
 };
 
@@ -14,6 +17,10 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
   const isGreen = room.accent === "GREEN";
   const CategoryIcon = room.category === "GRC" ? FileCheck2 : Crosshair;
   const percent = room.progress.percent;
+  const presentation = "image" in room ? room : API_ROOM_PRESENTATION[room.slug];
+  const image = presentation?.image ?? "/images/computer_photo.png";
+  const imageAlt = presentation?.imageAlt ?? `${room.title} üçün təlim təsviri`;
+  const progressMode = "progressMode" in room ? room.progressMode : "api";
 
   return (
     <article
@@ -23,11 +30,25 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
           : "border-red-300/10 hover:border-red-300/35 hover:shadow-[0_24px_80px_rgba(239,68,68,0.1)]"
       } ${featured ? "min-h-[330px]" : "min-h-[310px]"}`}
     >
+      <div className="relative aspect-[16/8.4] overflow-hidden border-b border-white/[0.06] bg-[#111416]">
+        <Image
+          src={image}
+          alt={imageAlt}
+          fill
+          sizes="(min-width: 768px) 50vw, 100vw"
+          className="object-cover transition duration-700 group-hover:scale-[1.06] group-hover:saturate-125"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#1a1d1f] via-[#1a1d1f]/10 to-black/10" />
+        <span className={`absolute left-4 top-4 rounded-full border px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.13em] backdrop-blur ${progressMode === "local" ? "border-amber-200/20 bg-amber-200/10 text-amber-100" : "border-emerald-200/20 bg-emerald-200/10 text-emerald-100"}`}>
+          {progressMode === "local" ? "Bu cihazda" : "Sinxron"}
+        </span>
+      </div>
+
       <div className={`card-radar ${isGreen ? "card-radar--green" : "card-radar--red"}`} />
       <div className="card-scanline" />
       <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.1] transition-opacity duration-500 group-hover:opacity-[0.2]" />
 
-      <div className="relative flex items-start justify-between p-5 pb-4 sm:p-6 sm:pb-4">
+      <div className="relative flex items-start justify-between p-5 pb-4 sm:px-6 sm:pt-5 sm:pb-4">
         <div className={`room-icon-shell ${isGreen ? "room-icon-shell--green" : "room-icon-shell--red"}`}>
           <CategoryIcon className="size-5 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110" aria-hidden="true" />
           <span className="room-icon-shell__ring" />

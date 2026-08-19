@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { GraduationCap, Presentation, School } from "lucide-react";
 
 const ROLES = [
@@ -12,6 +13,7 @@ const ROLES = [
       "Path tamamlayanda sertifikat qazanır",
     ],
     accent: "green" as const,
+    image: "/images/userprofile.jpg",
   },
   {
     icon: Presentation,
@@ -24,6 +26,7 @@ const ROLES = [
       "Tapşırığı sinfə bir link kimi verir",
     ],
     accent: "red" as const,
+    image: "/images/teacher_profile_photo.png",
   },
   {
     icon: School,
@@ -36,6 +39,7 @@ const ROLES = [
       "Pilot mərhələni komanda ilə birgə planlaşdırır",
     ],
     accent: "green" as const,
+    image: null,
   },
 ];
 
@@ -64,13 +68,17 @@ export function RolesSection() {
             >
               <div className="flex items-center gap-3">
                 <span
-                  className={`grid size-11 shrink-0 place-items-center rounded-xl border transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 ${
+                  className={`relative grid size-11 shrink-0 place-items-center overflow-hidden rounded-xl border transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 ${
                     green
                       ? "border-emerald-300/18 bg-emerald-300/[0.07] text-emerald-300"
                       : "border-red-300/18 bg-red-300/[0.07] text-red-300"
                   }`}
                 >
-                  <Icon className="size-5" aria-hidden="true" />
+                  {role.image ? (
+                    <Image src={role.image} alt="" fill sizes="44px" className="object-cover" aria-hidden="true" />
+                  ) : (
+                    <Icon className="size-5" aria-hidden="true" />
+                  )}
                 </span>
                 <div>
                   <h3 className="text-base font-semibold text-white">{role.name}</h3>

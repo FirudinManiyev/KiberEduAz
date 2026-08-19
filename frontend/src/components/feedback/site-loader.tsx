@@ -35,7 +35,7 @@ export function SiteLoader() {
           <span className="site-loader__cursor" />
         </div>
         <div className="site-loader__bar mt-6"><span /></div>
-        <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.22em] text-slate-600">secure learning environment</p>
+        <p className="mt-3 font-mono text-[9px] uppercase tracking-[0.18em] text-slate-600">təhlükəsiz təlim mühiti qurulur</p>
       </div>
     </div>
   );

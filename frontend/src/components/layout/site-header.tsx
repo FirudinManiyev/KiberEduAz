@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   BookOpen,
+  HelpCircle,
   LayoutDashboard,
   LogIn,
   Map,
@@ -16,39 +17,28 @@ import {
   X,
 } from "lucide-react";
 import { useState } from "react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 import type { UserRole } from "@/lib/api/types";
+import {
+  mobileNavigationFor,
+  navigationFor,
+  type NavigationIcon,
+} from "@/lib/navigation";
 
-const guestNavigation = [
-  { label: "Ana səhifə", href: "/", icon: LayoutDashboard },
-  { label: "Əlaqə", href: "/contact", icon: MessageCircle },
-];
-
-function navigationFor(role: UserRole | undefined, pending: boolean) {
-  if (!role) return guestNavigation;
-  if (pending) return [{ label: "Gözləmə", href: "/pending", icon: Shield }];
-  if (role === "ADMIN") {
-    return [
-      { label: "Admin", href: "/admin", icon: Shield },
-      { label: "Room-lar", href: "/rooms", icon: BookOpen },
-      { label: "Əlaqə", href: "/contact", icon: MessageCircle },
-    ];
-  }
-  if (role === "TEACHER") {
-    return [
-      { label: "Müəllim", href: "/teacher", icon: LayoutDashboard },
-      { label: "Room-lar", href: "/rooms", icon: BookOpen },
-      { label: "Əlaqə", href: "/contact", icon: MessageCircle },
-    ];
-  }
-  return [
-    { label: "İdarə paneli", href: "/dashboard", icon: LayoutDashboard },
-    { label: "Room-lar", href: "/rooms", icon: BookOpen },
-    { label: "Roadmap", href: "/roadmap", icon: Map },
-    { label: "Əlaqə", href: "/contact", icon: MessageCircle },
-  ];
-}
+const NAVIGATION_ICONS: Record<NavigationIcon, typeof LayoutDashboard> = {
+  dashboard: LayoutDashboard,
+  rooms: BookOpen,
+  roadmap: Map,
+  contact: MessageCircle,
+  faq: HelpCircle,
+  shield: Shield,
+  notifications: Bell,
+  profile: UserRound,
+  login: LogIn,
+  register: UserPlus,
+};
 
 function isActive(pathname: string, href: string) {
   if (href === "/") return pathname === "/";
@@ -81,7 +71,7 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
       <div className="mx-auto flex h-[72px] max-w-[1440px] items-center justify-between px-4 sm:px-6 lg:px-10">
         <div className="flex items-center gap-8 xl:gap-11">
           <Logo />
-          <nav className="hidden items-center gap-1 lg:flex" aria-label="Əsas naviqasiya">
+          <nav className="hidden items-center gap-1 xl:flex" aria-label="Əsas naviqasiya">
             {navigation.map((item) => {
               const active = isActive(pathname, item.href);
 
@@ -161,6 +151,9 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
                 </span>
                 <LinkLoadingIndicator />
               </Link>
+              <div className="hidden xl:block">
+                <SignOutButton variant="header" />
+              </div>
             </>
           ) : (
             <>
@@ -189,7 +182,7 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
           <button
             type="button"
             onClick={() => setMenuOpen((current) => !current)}
-            className="grid size-10 place-items-center rounded-xl border border-white/[0.08] text-slate-300 transition-all hover:rotate-3 hover:bg-white/[0.06] lg:hidden"
+            className="grid size-10 place-items-center rounded-xl border border-white/[0.08] text-slate-300 transition-all hover:rotate-3 hover:bg-white/[0.06] xl:hidden"
             aria-label={menuOpen ? "Menyunu bağla" : "Menyunu aç"}
             aria-expanded={menuOpen}
           >
@@ -200,28 +193,16 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
 
       {menuOpen && (
         <nav
-          className="mobile-nav-enter border-t border-white/[0.07] bg-[#17191b] px-4 py-3 lg:hidden"
+          className="mobile-nav-enter border-t border-white/[0.07] bg-[#17191b] px-4 py-3 xl:hidden"
           aria-label="Mobil naviqasiya"
         >
           <div className="mx-auto grid max-w-[1440px] gap-1">
-            {(signedIn
-              ? [
-                  ...navigation,
-                  ...(user?.pending
-                    ? []
-                    : [
-                        { label: "Bildirişlər", href: "/notifications", icon: Bell },
-                        { label: "Profil", href: "/profile", icon: UserRound },
-                      ]),
-                ]
-              : [
-                  ...guestNavigation,
-                  { label: "Daxil ol", href: "/login", icon: LogIn },
-                  { label: "Qeydiyyat", href: "/register", icon: UserPlus },
-                  { label: "Müəllim qeydiyyatı", href: "/register/teacher", icon: UserPlus },
-                ]
-            ).map((item) => {
-              const Icon = item.icon;
+            {mobileNavigationFor(user?.role, Boolean(user?.pending), signedIn).map((item) => {
+              if (item.kind === "signout") {
+                return <SignOutButton key={item.kind} variant="mobile" onAction={() => setMenuOpen(false)} />;
+              }
+
+              const Icon = NAVIGATION_ICONS[item.icon];
               const active = isActive(pathname, item.href);
 
               return (

@@ -4,6 +4,7 @@ import { ChromeGate } from "@/components/layout/chrome-gate";
 import { SiteFooterContainer } from "@/components/layout/site-footer-container";
 import { SiteHeaderContainer } from "@/components/layout/site-header-container";
 import { SiteLoader } from "@/components/feedback/site-loader";
+import { AppToaster } from "@/components/feedback/app-toaster";
 import { GlobalAcidBackground } from "@/components/effects/global-acid-background";
 import "./globals.css";
 
@@ -49,6 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           <SiteHeaderContainer />
         </ChromeGate>
         {children}
+        <AppToaster />
         <ChromeGate>
           <SiteFooterContainer />
         </ChromeGate>

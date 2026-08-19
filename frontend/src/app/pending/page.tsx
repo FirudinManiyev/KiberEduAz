@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Clock3, LogOut, ShieldAlert } from "lucide-react";
+import { Clock3, ShieldAlert } from "lucide-react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { apiFetchOrNull } from "@/lib/api/server";
 import type { MyProfile } from "@/lib/api/types";
 import { homePathFor } from "@/lib/auth/home-path";
@@ -46,12 +47,7 @@ export default async function PendingPage() {
           <Link href="/contact" className="secondary-action justify-center">
             Əlaqə
           </Link>
-          <form action="/auth/signout" method="post">
-            <button type="submit" className="primary-action w-full justify-center sm:w-auto">
-              <LogOut className="size-4" />
-              Çıxış
-            </button>
-          </form>
+          <SignOutButton />
         </div>
       </section>
     </main>

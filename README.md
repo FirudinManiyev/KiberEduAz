@@ -20,8 +20,12 @@ KiberEduAz/
 - Daimi progress: task/room tamamlanması, xal jurnalı, gündəlik seriya (streak)
 - Sinif, təşkilat və qlobal reytinq cədvəli
 - Bildiriş mərkəzi və profil redaktəsi
-- Pentestinq və GRC istiqamətində iki hazır Room
-- Mobil, planşet və masaüstü üçün responsive dizayn
+- Red Team, Blue Team və GRC istiqamətlərində yeddi hazır Room
+- İki hesabla sinxron API Room-u və `frontend/src/data/` materiallarından qurulan beş cihaz-lokal Markdown Room-u
+- Cədvəl, kod nümunəsi, sual və task axınını qoruyan interaktiv dərs player-i
+- Üç istiqamətli roadmap, axtarışlı Azərbaycanca FAQ və bütün ekranlarda əlçatan hesabdan çıxış
+- Kontekstə uyğun foto/illüstrasiyalar və mobil cihazlarda aşağı-yüklü responsive WebGL fon
+- Mobil, planşet və masaüstü üçün 320 px-dən başlayan responsive dizayn
 
 ## Texnologiyalar
 
@@ -70,6 +74,17 @@ npm run dev                   # http://localhost:3000
 ```
 
 `.env.example` içindəki dəyərlər (Supabase URL və publishable key) real və açıq paylaşıla biləndir, ona görə əlavə dəyişiklik tələb olunmur.
+
+Frontend keyfiyyət yoxlamaları:
+
+```bash
+npm test
+npm run lint
+npx tsc --noEmit
+npm run build
+```
+
+Yeni statik dərslərin progress-i `kibereduaz:room-progress:v1` açarı ilə brauzerdə saxlanılır və UI-də “Bu cihazda saxlanılır” kimi işarələnir. `intro-to-pentesting` və `grc-foundations` Room-ları əvvəlki kimi backend hesabı ilə sinxron işləyir.
 
 ### 4. İlk istifadəçi
 
@@ -209,10 +224,10 @@ Bundan sonra `render.yaml`-daki `buildCommand`-a `&& npm run prisma:deploy` əla
 
 ## Növbəti mərhələlər
 
-- Müəllim/admin idarəetmə panelləri (UI)
 - Sinif və qrup idarəetməsi, dəvət kodları
 - Sertifikat (PDF) və badge sistemi
-- Daha çox ssenari əsaslı Room və task
+- Lokal Room progress-inin hesabla sinxronlaşdırılması
+- Daha çox Red Team, Blue Team və GRC ssenari əsaslı Room və task
 - Müəllim üçün hesabat və eksport
 
 ---

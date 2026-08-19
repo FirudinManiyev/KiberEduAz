@@ -1,16 +1,18 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, Check, Loader2, LogOut, Save, ShieldCheck, Sparkles } from "lucide-react";
+import { AlertTriangle, Check, Loader2, Save, ShieldCheck, Sparkles } from "lucide-react";
 import { FormEvent, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
 import type { MyProfile, Rank } from "@/lib/api/types";
 
 const AVATARS = [
-  { key: "red", initials: "AN", className: "from-red-500 to-red-950" },
-  { key: "emerald", initials: "AX", className: "from-emerald-400 to-emerald-950" },
-  { key: "zinc", initials: "01", className: "from-zinc-400 to-zinc-900" },
-  { key: "amber", initials: "KZ", className: "from-amber-400 to-red-900" },
+  { key: "red", initials: "AN", className: "from-red-500 to-red-950", image: "/images/userprofile.jpg" },
+  { key: "emerald", initials: "AX", className: "from-emerald-400 to-emerald-950", image: "/images/teacher_profile_photo.png" },
+  { key: "zinc", initials: "01", className: "from-zinc-400 to-zinc-900", image: null },
+  { key: "amber", initials: "KZ", className: "from-amber-400 to-red-900", image: null },
 ];
 
 const FOCUS_TRACKS = [
@@ -53,13 +55,13 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
   const [avatarKey, setAvatarKey] = useState(profile.avatarKey ?? AVATARS[0].key);
   const [notifications, setNotifications] = useState(profile.notifications);
   const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSaving(true);
+    toast.loading("Profil saxlanılır…", { id: "profile-save" });
 
     const form = new FormData(event.currentTarget);
     const text = (name: string) => {
@@ -85,11 +87,15 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
         }),
       });
 
-      setSaved(true);
-      window.setTimeout(() => setSaved(false), 2600);
+      toast.success("Profil yeniləndi", {
+        id: "profile-save",
+        description: "Dəyişikliklər uğurla saxlanıldı.",
+      });
       startTransition(() => router.refresh());
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Profil saxlanıla bilmədi");
+      const message = cause instanceof Error ? cause.message : "Profil saxlanıla bilmədi";
+      setError(message);
+      toast.error(message, { id: "profile-save" });
     } finally {
       setSaving(false);
     }
@@ -107,8 +113,8 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
             <span className="text-xs font-semibold text-slate-400">Avatar seç</span>
             <div className="mt-3 flex flex-wrap gap-3">
               {AVATARS.map((avatar) => (
-                <button key={avatar.key} type="button" onClick={() => setAvatarKey(avatar.key)} className={`relative grid size-14 place-items-center rounded-2xl border bg-gradient-to-br text-sm font-bold text-white transition-all hover:-translate-y-1 hover:rotate-2 ${avatar.className} ${avatarKey === avatar.key ? "border-emerald-300/60 shadow-[0_0_24px_rgba(52,211,153,.12)]" : "border-white/[0.08]"}`} aria-label={`Avatar ${avatar.key}`} aria-pressed={avatarKey === avatar.key}>
-                  {avatar.initials}
+                <button key={avatar.key} type="button" onClick={() => setAvatarKey(avatar.key)} className={`relative grid size-14 place-items-center overflow-hidden rounded-2xl border bg-gradient-to-br text-sm font-bold text-white transition-all hover:-translate-y-1 hover:rotate-2 ${avatar.className} ${avatarKey === avatar.key ? "border-emerald-300/60 shadow-[0_0_24px_rgba(52,211,153,.12)]" : "border-white/[0.08]"}`} aria-label={`Avatar ${avatar.key}`} aria-pressed={avatarKey === avatar.key}>
+                  {avatar.image ? <Image src={avatar.image} alt="" fill sizes="56px" className="object-cover" aria-hidden="true" /> : avatar.initials}
                   {avatarKey === avatar.key && <span className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-emerald-400 text-emerald-950 ring-2 ring-[#1a1d1f]"><Check className="size-3" strokeWidth={3} /></span>}
                 </button>
               ))}
@@ -162,19 +168,6 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
           <span className="button-sheen" />
         </button>
       </aside>
-
-      {saved && <div className="save-toast" role="status"><span className="grid size-8 place-items-center rounded-lg bg-emerald-400 text-emerald-950"><Check className="size-4" strokeWidth={3} /></span><div><p className="text-xs font-semibold text-white">Profil yeniləndi</p><p className="mt-0.5 text-[10px] text-slate-500">Dəyişikliklər bazaya yazıldı.</p></div></div>}
-    </form>
-  );
-}
-
-export function SignOutButton() {
-  return (
-    <form action="/auth/signout" method="post">
-      <button type="submit" className="inline-flex items-center gap-2 rounded-xl border border-white/[0.08] px-3.5 py-2.5 text-xs font-semibold text-slate-400 transition-colors hover:border-rose-300/25 hover:bg-rose-300/[0.06] hover:text-rose-200">
-        <LogOut className="size-4" aria-hidden="true" />
-        Çıxış et
-      </button>
     </form>
   );
 }

@@ -1,7 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, ChevronRight, Radar, ShieldCheck, SplitSquareVertical, Users } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
-import { CommandConsole } from "@/components/home/command-console";
 
 const SIGNALS = [
   {
@@ -86,9 +86,17 @@ export function LandingHero() {
           </ul>
         </div>
 
-        <div className="relative mx-auto w-full max-w-[610px] lg:mr-0">
-          <div className="absolute -inset-12 -z-10 rounded-full bg-red-500/[0.045] blur-3xl" />
-          <CommandConsole ctaHref="/register" ctaLabel="Tam missiyalar üçün qeydiyyatdan keç" />
+        <div className="mx-auto w-full min-w-0 max-w-[610px] lg:mr-0">
+          <div className="group relative aspect-[16/10] w-full max-w-full overflow-hidden rounded-2xl border border-red-300/15 bg-[#141719] shadow-[0_30px_100px_rgba(0,0,0,.3)]">
+            <Image
+              src="/images/cybersecurity_photo.jpg"
+              alt="Kibertəhlükəsizlik əməliyyat ekranları ilə çalışan mütəxəssis"
+              fill
+              priority
+              sizes="(min-width: 1024px) 45vw, (min-width: 640px) 610px, calc(100vw - 2rem)"
+              className="object-cover transition-transform duration-700 motion-safe:lg:group-hover:scale-[1.03]"
+            />
+          </div>
         </div>
       </div>
     </section>

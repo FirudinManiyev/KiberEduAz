@@ -34,8 +34,8 @@ export const metadata: Metadata = {
   },
 };
 
-/// Signed-in visitors never reach this component: the proxy sends `/` to
-/// `/dashboard` before the route renders.
+/// The marketing landing page stays public for both anonymous and signed-in
+/// visitors; role-specific workspaces remain available from the main nav.
 export default function LandingPage() {
   return (
     <main className="flex-1 overflow-hidden">

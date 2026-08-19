@@ -11,12 +11,14 @@ export function SiteFooter({ signedIn = false }: SiteFooterProps) {
         { href: "/dashboard", label: "İdarə paneli", tone: "emerald" as const },
         { href: "/rooms", label: "Room-lar", tone: "emerald" as const },
         { href: "/roadmap", label: "Roadmap", tone: "emerald" as const },
+        { href: "/faq", label: "FAQ", tone: "red" as const },
         { href: "/contact", label: "Əlaqə", tone: "red" as const },
         { href: "/notifications", label: "Bildirişlər", tone: "red" as const },
         { href: "/profile", label: "Profil", tone: "emerald" as const },
       ]
     : [
         { href: "/", label: "Ana səhifə", tone: "emerald" as const },
+        { href: "/faq", label: "FAQ", tone: "red" as const },
         { href: "/contact", label: "Əlaqə", tone: "red" as const },
         { href: "/login", label: "Daxil ol", tone: "emerald" as const },
         { href: "/register", label: "Qeydiyyat", tone: "emerald" as const },
