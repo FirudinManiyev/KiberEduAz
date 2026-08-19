@@ -94,6 +94,85 @@ export class ProgressService {
     });
   }
 
+  /// Marks a reading task as done. Some rooms teach through prose and
+  /// open-ended reflection prompts that no exact-match grader can score, so the
+  /// learner confirms completion themselves. Tasks that carry auto-graded
+  /// questions are deliberately excluded: those still have to be answered.
+  async completeTask(user: AuthenticatedUser, taskId: string) {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      include: {
+        room: { select: { id: true, points: true, status: true } },
+        _count: { select: { questions: true } },
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException('Task tapılmadı');
+    }
+
+    if (user.profile.role === UserRole.STUDENT && task.room.status !== ContentStatus.PUBLISHED) {
+      throw new NotFoundException('Task tapılmadı');
+    }
+
+    if (task._count.questions > 0) {
+      throw new BadRequestException('Bu task sualları cavablandırmaqla tamamlanır');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const previous = await tx.taskProgress.findUnique({
+        where: { profileId_taskId: { profileId: user.id, taskId } },
+      });
+
+      const progress = await tx.taskProgress.upsert({
+        where: { profileId_taskId: { profileId: user.id, taskId } },
+        create: {
+          profileId: user.id,
+          taskId,
+          roomId: task.roomId,
+          status: ProgressStatus.COMPLETED,
+          pointsEarned: task.points,
+          attempts: 1,
+          completedAt: new Date(),
+        },
+        update: {
+          status: ProgressStatus.COMPLETED,
+          pointsEarned: task.points,
+          attempts: { increment: 1 },
+          // Keep the original timestamp so re-confirming does not reset it.
+          completedAt: previous?.completedAt ?? new Date(),
+        },
+      });
+
+      // Reading tasks pay out through the room completion bonus rather than a
+      // per-task ledger entry, which keeps the advertised room XP exact.
+      const roomState = await this.syncRoomProgress(tx, user.id, task.room);
+      const stats = await this.syncStats(tx, user.id, {
+        isCorrect: false,
+        pointsAwarded: roomState.completionBonus,
+        countsAsAnswer: false,
+      });
+
+      return {
+        task: {
+          id: taskId,
+          completed: progress.status === ProgressStatus.COMPLETED,
+          solvedQuestionCount: 0,
+          questionCount: 0,
+          pointsEarned: progress.pointsEarned,
+        },
+        room: roomState,
+        stats: {
+          totalPoints: stats.totalPoints,
+          currentStreak: stats.currentStreak,
+          longestStreak: stats.longestStreak,
+          correctAnswers: stats.correctAnswers,
+          totalAnswers: stats.totalAnswers,
+        },
+      };
+    });
+  }
+
   private grade(
     question: { type: QuestionType; acceptedAnswers: string[]; options: { id: string; isCorrect: boolean }[] },
     dto: SubmitAnswerDto,
@@ -261,8 +340,11 @@ export class ProgressService {
   private async syncStats(
     tx: Prisma.TransactionClient,
     profileId: string,
-    delta: { isCorrect: boolean; pointsAwarded: number },
+    // `countsAsAnswer` keeps accuracy honest: confirming a reading task is not
+    // an answer, so it must not land in the correct/total ratio.
+    delta: { isCorrect: boolean; pointsAwarded: number; countsAsAnswer?: boolean },
   ) {
+    const answerDelta = delta.countsAsAnswer === false ? 0 : 1;
     const current = await tx.userStats.findUnique({ where: { profileId } });
     const today = startOfUtcDay(new Date());
     const streak = nextStreak(current?.lastActiveDate ?? null, current?.currentStreak ?? 0, today);
@@ -278,7 +360,7 @@ export class ProgressService {
         profileId,
         totalPoints: delta.pointsAwarded,
         correctAnswers: delta.isCorrect ? 1 : 0,
-        totalAnswers: 1,
+        totalAnswers: answerDelta,
         tasksCompleted,
         roomsCompleted,
         currentStreak: streak,
@@ -288,7 +370,7 @@ export class ProgressService {
       update: {
         totalPoints: { increment: delta.pointsAwarded },
         correctAnswers: { increment: delta.isCorrect ? 1 : 0 },
-        totalAnswers: { increment: 1 },
+        totalAnswers: { increment: answerDelta },
         tasksCompleted,
         roomsCompleted,
         currentStreak: streak,

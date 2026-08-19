@@ -1,4 +1,4 @@
-import { HOLBERTON_ROOM_CATALOG } from "@/lib/content/holberton-rooms.generated";
+import { HOLBERTON_PRESENTATION } from "@/lib/content/holberton-presentation.generated";
 import type { LearningTrack, LocalRoomDefinition } from "@/lib/content/types";
 
 export const API_ROOM_PRESENTATION: Record<
@@ -15,6 +15,8 @@ export const API_ROOM_PRESENTATION: Record<
     imageAlt: "Rəqəmsal qalxan və kibertəhlükəsizlik təsviri",
     track: "GRC",
   },
+  // The Red Team curriculum lives in the database; this only supplies artwork.
+  ...HOLBERTON_PRESENTATION,
 };
 
 export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
@@ -173,7 +175,6 @@ export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
       points: index === 4 ? 180 : 130,
     })),
   },
-  ...HOLBERTON_ROOM_CATALOG,
 ] as const;
 
 export function getLocalRoomDefinition(slug: string): LocalRoomDefinition | null {

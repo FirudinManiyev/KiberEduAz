@@ -26,4 +26,12 @@ export class ProgressController {
   ) {
     return this.progressService.submitAnswer(user, questionId, dto);
   }
+
+  @Post('tasks/:taskId/complete')
+  completeTask(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
+  ) {
+    return this.progressService.completeTask(user, taskId);
+  }
 }

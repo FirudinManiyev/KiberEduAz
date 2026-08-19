@@ -2,9 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
-import { LOCAL_ROOM_CATALOG, getLocalRoomDefinition } from "../src/lib/content/catalog.ts";
+import { getLocalRoomDefinition } from "../src/lib/content/catalog.ts";
 import { parseLocalMarkdown } from "../src/lib/content/markdown-parser.ts";
-import { HOLBERTON_ROOM_CATALOG } from "../src/lib/content/holberton-rooms.generated.ts";
 
 async function parseFixture(slug) {
   const definition = getLocalRoomDefinition(slug);
@@ -47,32 +46,6 @@ test("curated GRC heading groups become five non-empty English lesson tasks", as
   assert.match(room.tasks[1].markdown, /### COSO ERM/);
   assert.match(room.tasks[2].markdown, /### ISO 27001/);
   assert.match(room.tasks[3].markdown, /## Choosing the Right Framework/);
-});
-
-test("every imported Holberton room parses into tasks with no leaked answer key", async () => {
-  assert.equal(HOLBERTON_ROOM_CATALOG.length, 37);
-
-  for (const definition of HOLBERTON_ROOM_CATALOG) {
-    const room = await parseFixture(definition.slug);
-
-    assert.equal(room.tasks.length, definition.taskGroups.length, definition.slug);
-    assert.ok(
-      room.tasks.every((task) => task.markdown.length > 100),
-      `${definition.slug}: every task must carry lesson content`,
-    );
-
-    for (const task of room.tasks) {
-      assert.doesNotMatch(task.markdown, /CƏVAB AÇARI/i, `${definition.slug}: answer key must be stripped`);
-      assert.doesNotMatch(task.markdown, /Yekun Yoxlama/i, `${definition.slug}: summary quiz must be stripped`);
-      assert.doesNotMatch(task.markdown, /^###\s+Sual/im, `${definition.slug}: questions must be extracted, not left as headings`);
-    }
-  }
-});
-
-test("imported rooms expand the discoverable catalogue", () => {
-  const importedSlugs = new Set(HOLBERTON_ROOM_CATALOG.map((room) => room.slug));
-  const inCatalogue = LOCAL_ROOM_CATALOG.filter((room) => importedSlugs.has(room.slug));
-  assert.equal(inCatalogue.length, HOLBERTON_ROOM_CATALOG.length);
 });
 
 test("parser rejects a source whose configured task heading is missing", () => {

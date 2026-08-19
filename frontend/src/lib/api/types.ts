@@ -118,6 +118,10 @@ export interface AnswerResult {
   };
 }
 
+/// Returned when a learner confirms they finished a reading task, which is how
+/// tasks without auto-graded questions are completed.
+export type TaskCompletionResult = Pick<AnswerResult, "task" | "room" | "stats">;
+
 export interface Rank {
   name: string;
   level: number;

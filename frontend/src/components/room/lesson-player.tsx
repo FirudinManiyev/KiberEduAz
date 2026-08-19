@@ -20,8 +20,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { LessonMarkdown } from "@/components/room/lesson-markdown";
 import { apiRequest } from "@/lib/api/client";
-import type { AnswerResult, RoomDetail } from "@/lib/api/types";
+import type { AnswerResult, RoomDetail, TaskCompletionResult } from "@/lib/api/types";
 
 type LessonPlayerProps = {
   room: RoomDetail;
@@ -68,6 +69,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
   );
   const [questionStates, setQuestionStates] = useState(() => initialQuestionStates(room));
   const [earnedPoints, setEarnedPoints] = useState(room.progress.pointsEarned);
+  const [completingTaskId, setCompletingTaskId] = useState<string | null>(null);
 
   const currentTask = room.tasks[currentTaskIndex];
   const progress = room.tasks.length
@@ -75,6 +77,9 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
     : 0;
   const currentCompleted = currentTask ? completedTaskIds.includes(currentTask.id) : false;
   const isLastTask = currentTaskIndex === room.tasks.length - 1;
+  // Tasks without auto-graded questions are finished by the learner confirming
+  // they read them; the server enforces the same rule.
+  const isReadingTask = (currentTask?.questions.length ?? 0) === 0;
 
   function patchQuestion(questionId: string, patch: Partial<QuestionState>) {
     setQuestionStates((current) => ({
@@ -148,6 +153,39 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
 
   function resetQuestion(questionId: string) {
     patchQuestion(questionId, { selectedOptionId: null, wrongOptionId: null, error: null });
+  }
+
+  /// Reading tasks carry open-ended prompts no grader can score, so the learner
+  /// confirms completion once they have worked through the material.
+  async function confirmTaskRead(taskId: string) {
+    if (completingTaskId || completedTaskIds.includes(taskId)) return;
+
+    setCompletingTaskId(taskId);
+    toast.loading("Yadda saxlanılır…", { id: "task-complete" });
+
+    try {
+      const result = await apiRequest<TaskCompletionResult>(
+        `/progress/tasks/${taskId}/complete`,
+        { method: "POST" },
+      );
+
+      setCompletedTaskIds((current) =>
+        current.includes(result.task.id) ? current : [...current, result.task.id],
+      );
+      setEarnedPoints(result.room.pointsEarned);
+
+      toast.success(result.room.completed ? "Room tamamlandı" : "Task tamamlandı", {
+        id: "task-complete",
+        description: result.room.completed
+          ? `${result.room.pointsEarned} XP hesabına yazıldı.`
+          : "Progress hesabında saxlanıldı.",
+      });
+    } catch (cause) {
+      const message = cause instanceof Error ? cause.message : "Task tamamlana bilmədi";
+      toast.error(message, { id: "task-complete" });
+    } finally {
+      setCompletingTaskId(null);
+    }
   }
 
   if (!currentTask) {
@@ -283,20 +321,29 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
                 {currentTask.title}
               </h3>
 
-              <div className="lesson-copy mt-8 space-y-7">
+              {/* Bodies are markdown so authored tables, code blocks and lists
+                  survive. Headings and bullets keep the structured card styling,
+                  which only applies inside `.lesson-copy`. */}
+              <div className="mt-8 space-y-7">
                 {currentTask.sections.map((section, index) => (
                   <section key={`${currentTask.id}-${index}`}>
-                    {section.heading && <h4>{section.heading}</h4>}
-                    <p>{section.body}</p>
-                    {section.bullets && (
-                      <ul>
-                        {section.bullets.map((bullet) => (
-                          <li key={bullet}>
-                            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-400" aria-hidden="true" />
-                            <span>{bullet}</span>
-                          </li>
-                        ))}
-                      </ul>
+                    {section.heading && (
+                      <div className="lesson-copy">
+                        <h4>{section.heading}</h4>
+                      </div>
+                    )}
+                    {section.body && <LessonMarkdown>{section.body}</LessonMarkdown>}
+                    {section.bullets && section.bullets.length > 0 && (
+                      <div className="lesson-copy">
+                        <ul>
+                          {section.bullets.map((bullet) => (
+                            <li key={bullet}>
+                              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-400" aria-hidden="true" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </section>
                 ))}
@@ -419,6 +466,38 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
                 );
               })}
 
+              {isReadingTask && !currentCompleted && (
+                <div className="mt-10 rounded-2xl border border-emerald-300/15 bg-emerald-300/[0.04] p-5 sm:p-6">
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-emerald-300/10 text-emerald-300">
+                      <BookOpen className="size-[18px]" aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-300">
+                        Oxu tapşırığı
+                      </p>
+                      <p className="mt-2 text-sm leading-6 text-slate-300">
+                        Bu task-da mətni oxu və sualları öz üzərində düşün. Hazır olanda tamamlandı kimi işarələ.
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void confirmTaskRead(currentTask.id)}
+                    disabled={completingTaskId === currentTask.id}
+                    className="mt-5 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-5 text-sm font-bold text-emerald-950 transition-all hover:-translate-y-0.5 hover:bg-emerald-300 disabled:cursor-wait disabled:opacity-60"
+                  >
+                    {completingTaskId === currentTask.id ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                    ) : (
+                      <Check className="size-4" aria-hidden="true" />
+                    )}
+                    Oxudum, tamamladım
+                  </button>
+                </div>
+              )}
+
               <div className="mt-8 flex flex-col-reverse gap-3 border-t border-white/[0.07] pt-6 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   type="button"
@@ -448,7 +527,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
                   </div>
                 )}
 
-                {!currentCompleted && (
+                {!currentCompleted && !isReadingTask && (
                   <p className="inline-flex items-center justify-center gap-2 text-xs text-slate-500">
                     <Target className="size-4" aria-hidden="true" />
                     Davam etmək üçün düzgün cavabı tap
