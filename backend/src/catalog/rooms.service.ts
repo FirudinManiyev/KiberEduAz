@@ -8,12 +8,7 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
-import {
-  toRoomDetailForAuthor,
-  toRoomDetailForLearner,
-  toRoomSummary,
-  type RoomWithContent,
-} from './catalog.serializer';
+import { toRoomDetailForAuthor, toRoomDetailForLearner, toRoomSummary } from './catalog.serializer';
 import type { RoomQueryDto, UpsertQuestionDto, UpsertRoomDto, UpsertTaskDto } from './dto/content.dto';
 
 const CONTENT_INCLUDE = {
@@ -118,7 +113,7 @@ export class RoomsService {
       taskProgress.map((entry) => [entry.taskId, entry]),
     );
 
-    return toRoomDetailForLearner(room as RoomWithContent, roomProgress, taskProgressMap, answers);
+    return toRoomDetailForLearner(room, roomProgress, taskProgressMap, answers);
   }
 
   private async solvedQuestionIds(profileId: string, questionIds: string[]): Promise<Set<string>> {
@@ -156,7 +151,7 @@ export class RoomsService {
       throw new NotFoundException('Room tapılmadı');
     }
 
-    return toRoomDetailForAuthor(room as RoomWithContent);
+    return toRoomDetailForAuthor(room);
   }
 
   async create(user: AuthenticatedUser, dto: UpsertRoomDto) {
@@ -179,7 +174,7 @@ export class RoomsService {
       include: CONTENT_INCLUDE,
     });
 
-    return toRoomDetailForAuthor(room as RoomWithContent);
+    return toRoomDetailForAuthor(room);
   }
 
   async update(user: AuthenticatedUser, id: string, dto: Partial<UpsertRoomDto>) {
@@ -196,7 +191,7 @@ export class RoomsService {
       include: CONTENT_INCLUDE,
     });
 
-    return toRoomDetailForAuthor(room as RoomWithContent);
+    return toRoomDetailForAuthor(room);
   }
 
   async setStatus(id: string, status: ContentStatus) {
@@ -209,7 +204,7 @@ export class RoomsService {
       include: CONTENT_INCLUDE,
     });
 
-    return toRoomDetailForAuthor(room as RoomWithContent);
+    return toRoomDetailForAuthor(room);
   }
 
   async remove(id: string): Promise<void> {

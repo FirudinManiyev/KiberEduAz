@@ -51,7 +51,7 @@ export class ProgressService {
           profileId: user.id,
           questionId,
           taskId: question.taskId,
-          submittedAnswer: this.normalizeAnswer(dto) as Prisma.InputJsonValue,
+          submittedAnswer: this.normalizeAnswer(dto),
           isCorrect,
           pointsAwarded,
         },
