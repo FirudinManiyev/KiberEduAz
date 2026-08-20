@@ -55,14 +55,19 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
-  const switchHref =
-    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//")
-      ? `${copy.switchHref}?next=${encodeURIComponent(nextParam)}`
-      : copy.switchHref;
+  const nextPath =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
+  const switchHref = nextPath
+    ? `${copy.switchHref}?next=${encodeURIComponent(nextPath)}`
+    : copy.switchHref;
+
+  // /auth/callback bounces a rejected confirmation link back here with the reason.
+  const linkError = searchParams.get("authError");
 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const shownError = error ?? (linkError ? translateLinkError(linkError) : null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -89,6 +94,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           email,
           password,
           options: {
+            emailRedirectTo: `${window.location.origin}/auth/callback${
+              nextPath ? `?next=${encodeURIComponent(nextPath)}` : ""
+            }`,
             data: {
               full_name: fullName,
               ...(mode === "register-teacher"
@@ -146,12 +154,8 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         });
       }
 
-      const next = searchParams.get("next");
       const roleHome = homePathFor(profile);
-      const safeNext =
-        next && next.startsWith("/") && !next.startsWith("//") && next !== "/"
-          ? next
-          : roleHome;
+      const safeNext = nextPath && nextPath !== "/" ? nextPath : roleHome;
 
       router.replace(
         profile.role === "TEACHER" && profile.accountStatus !== "ACTIVE" ? "/pending" : safeNext,
@@ -233,13 +237,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               required
             />
 
-            {error && (
+            {shownError && (
               <p
                 className="flex items-start gap-2 rounded-xl border border-rose-300/20 bg-rose-300/[0.07] p-3 text-xs leading-5 text-rose-100"
                 role="alert"
               >
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                {error}
+                {shownError}
               </p>
             )}
 
@@ -326,4 +330,20 @@ function translateAuthError(cause: unknown): string {
   if (/rate limit|too many/i.test(message)) return "Çox sayda cəhd. Bir az gözlə və yenidən yoxla.";
 
   return message || "Gözlənilməz xəta baş verdi.";
+}
+
+/// Reasons /auth/callback can reject a confirmation link. Supabase words these in
+/// English on the query string, so map the common ones before showing them.
+function translateLinkError(reason: string): string {
+  if (reason === "missing-code") {
+    return "Təsdiq linki natamamdır. Aşağıdan yenidən daxil olmağa çalış.";
+  }
+  if (/expired/i.test(reason)) {
+    return "Təsdiq linkinin vaxtı bitib. Yenidən qeydiyyatdan keçib yeni link istə.";
+  }
+  if (/already|used/i.test(reason)) {
+    return "Bu link artıq istifadə olunub. Sadəcə daxil ol.";
+  }
+
+  return `Təsdiq alınmadı: ${reason}`;
 }
