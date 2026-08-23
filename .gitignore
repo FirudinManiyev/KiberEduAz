@@ -98,3 +98,5 @@ docker-compose.override.yml
 # Misc
 # =========================
 .eslintcache
+.superpowers/
+.worktrees/
