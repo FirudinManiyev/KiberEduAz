@@ -5,7 +5,7 @@ import { SiteFooterContainer } from "@/components/layout/site-footer-container";
 import { SiteHeaderContainer } from "@/components/layout/site-header-container";
 import { SiteLoader } from "@/components/feedback/site-loader";
 import { AppToaster } from "@/components/feedback/app-toaster";
-import { GlobalAcidBackground } from "@/components/effects/global-acid-background";
+import { GlobalSilkBackground } from "@/components/effects/global-silk-background";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -45,7 +45,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="az" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col">
         <SiteLoader />
-        <GlobalAcidBackground />
+        <GlobalSilkBackground />
         <ChromeGate>
           <SiteHeaderContainer />
         </ChromeGate>
