@@ -3,11 +3,7 @@ import { existsSync } from "node:fs";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
-import {
-  API_ROOM_PRESENTATION,
-  LOCAL_ROOM_CATALOG,
-  getLocalRoomDefinition,
-} from "../src/lib/content/catalog.ts";
+import { LOCAL_ROOM_CATALOG, getLocalRoomDefinition } from "../src/lib/content/catalog.ts";
 import { decorateApiRoomDetail, mergeRoomSummaries } from "../src/lib/content/rooms.ts";
 
 const progress = {
@@ -95,7 +91,7 @@ test("API rooms receive presentation metadata without losing API progress", () =
   const [merged] = mergeRoomSummaries([apiWithProgress]);
 
   assert.equal(merged.progress.percent, 40);
-  assert.equal(merged.image, API_ROOM_PRESENTATION["intro-to-pentesting"].image);
+  assert.equal(merged.image, "/images/pentest_photo.jpg");
   assert.equal(merged.progressMode, "api");
 });
 
@@ -116,5 +112,11 @@ test("API room detail keeps server tasks while gaining shared presentation field
 
   assert.equal(decorated.progressMode, "api");
   assert.equal(decorated.tasks, detail.tasks);
-  assert.equal(decorated.image, "/images/hacker_photo2.jpg");
+  assert.equal(decorated.image, "/images/pentest_photo.jpg");
+});
+
+test("local Blue Team, SOC, and GRC rooms use topic-specific supplied artwork", () => {
+  assert.equal(getLocalRoomDefinition("introduction-to-blue-team")?.image, "/images/blue_team.webp");
+  assert.equal(getLocalRoomDefinition("soc-windows-event-logs-sysmon")?.image, "/images/soc_photo.jpg");
+  assert.equal(getLocalRoomDefinition("grc-frameworks-landscape")?.image, "/images/grc_photo.jpg");
 });

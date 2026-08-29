@@ -1,9 +1,9 @@
 import type { RoomDetail, RoomSummary } from "@/lib/api/types";
-import { API_ROOM_PRESENTATION, LOCAL_ROOM_CATALOG } from "@/lib/content/catalog";
+import { LOCAL_ROOM_CATALOG } from "@/lib/content/catalog";
+import { resolveRoomArtwork } from "@/lib/content/room-artwork";
 import type {
   ApiRoomDetailView,
   LearningRoomSummary,
-  LearningTrack,
 } from "@/lib/content/types";
 
 const EMPTY_PROGRESS = {
@@ -41,14 +41,13 @@ export function localRoomSummaries(): LearningRoomSummary[] {
 }
 
 function decorateApiRoom(room: RoomSummary): LearningRoomSummary {
-  const presentation = API_ROOM_PRESENTATION[room.slug];
-  const fallbackTrack = normalizeTrack(room.category);
+  const artwork = resolveRoomArtwork(room);
 
   return {
     ...room,
-    image: presentation?.image ?? "/images/computer_photo.png",
-    imageAlt: presentation?.imageAlt ?? `${room.title} üçün təlim təsviri`,
-    track: presentation?.track ?? fallbackTrack,
+    image: artwork.image,
+    imageAlt: artwork.imageAlt,
+    track: artwork.track,
     progressMode: "api",
   };
 }
@@ -65,19 +64,12 @@ export function mergeRoomSummaries(apiRooms: readonly RoomSummary[]): LearningRo
 }
 
 export function decorateApiRoomDetail(room: RoomDetail): ApiRoomDetailView {
-  const presentation = API_ROOM_PRESENTATION[room.slug];
+  const artwork = resolveRoomArtwork(room);
 
   return {
     ...room,
     progressMode: "api",
-    image: presentation?.image ?? "/images/computer_photo.png",
-    imageAlt: presentation?.imageAlt ?? `${room.title} üçün təlim təsviri`,
+    image: artwork.image,
+    imageAlt: artwork.imageAlt,
   };
-}
-
-function normalizeTrack(category: string): LearningTrack {
-  const normalized = category.toLocaleLowerCase("az");
-  if (normalized.includes("blue") || normalized.includes("müdafiə")) return "Blue Team";
-  if (normalized.includes("grc") || normalized.includes("risk")) return "GRC";
-  return "Red Team";
 }

@@ -6,13 +6,13 @@ export const API_ROOM_PRESENTATION: Record<
   { image: string; imageAlt: string; track: LearningTrack }
 > = {
   "intro-to-pentesting": {
-    image: "/images/hacker_photo2.jpg",
-    imageAlt: "Kompüter qarşısında etik hücum laboratoriyası",
+    image: "/images/pentest_photo.jpg",
+    imageAlt: "Pentestinqə giriş üçün penetrasiya testi laboratoriyası",
     track: "Red Team",
   },
   "grc-foundations": {
-    image: "/images/cybershield_photo.png",
-    imageAlt: "Rəqəmsal qalxan və kibertəhlükəsizlik təsviri",
+    image: "/images/grc_photo.jpg",
+    imageAlt: "GRC əsasları üçün idarəetmə, risk və uyğunluq təsviri",
     track: "GRC",
   },
   // The Red Team curriculum lives in the database; this only supplies artwork.
@@ -41,8 +41,8 @@ export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
     path: "İdarəetmə, Risk və Uyğunluq",
     module: "GRC təməli",
     sourceFile: "GRC_Roles_and_Three_Lines_Model (1).md",
-    image: "/images/cybershield_photo.png",
-    imageAlt: "İdarəetmə və təhlükəsizliyi simvolizə edən rəqəmsal qalxan",
+    image: "/images/grc_photo.jpg",
+    imageAlt: "GRC rolları və məsuliyyət bölgüsü üçün uyğunluq təsviri",
     taskGroups: [
       { id: "roles-context", title: "Məsuliyyət niyə vacibdir?", startHeading: "Before You Start: A Simple Analogy", endBefore: "The Three Lines Model — Overview", durationLabel: "10 dəq", points: 100 },
       { id: "roles-lines", title: "Üç Xətt Modeli", startHeading: "The Three Lines Model — Overview", endBefore: "Putting the Whole Picture Together", durationLabel: "14 dəq", points: 140 },
@@ -72,8 +72,8 @@ export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
     path: "İdarəetmə, Risk və Uyğunluq",
     module: "GRC təməli",
     sourceFile: "GRC_Frameworks_Landscape.md",
-    image: "/images/computer_photo.png",
-    imageAlt: "GRC çərçivələrinin öyrənilməsi üçün kompüter təsviri",
+    image: "/images/grc_photo.jpg",
+    imageAlt: "GRC çərçivələri üçün idarəetmə və uyğunluq təsviri",
     taskGroups: [
       { id: "framework-context", title: "Çərçivələrə giriş", startHeading: "Before You Start: A Simple Analogy", endBefore: "Two Categories of Frameworks", durationLabel: "12 dəq", points: 120 },
       { id: "framework-foundations", title: "Əsas çərçivələr", startHeading: "Two Categories of Frameworks", endBefore: "Domain-Specific Frameworks — The Detailed Maps", durationLabel: "16 dəq", points: 160 },
@@ -103,8 +103,8 @@ export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
     path: "İdarəetmə, Risk və Uyğunluq",
     module: "Risk idarəetməsi",
     sourceFile: "Risk_Identification.md",
-    image: "/images/database_photo.jpg",
-    imageAlt: "Risk məlumatlarının analizini göstərən texnoloji görüntü",
+    image: "/images/grc_photo.jpg",
+    imageAlt: "Risklərin müəyyənləşdirilməsi və qiymətləndirilməsi təsviri",
     taskGroups: [
       { id: "risk-context", title: "Riskləri əvvəlcədən görmək", startHeading: "Before You Start: A Simple Analogy", endBefore: "Risk vs. Issue vs. Incident — Getting the Vocabulary Right", durationLabel: "10 dəq", points: 90 },
       { id: "risk-language", title: "Risk, problem və insident", startHeading: "Risk vs. Issue vs. Incident — Getting the Vocabulary Right", endBefore: "Risk Identification Techniques", durationLabel: "10 dəq", points: 110 },
@@ -134,8 +134,8 @@ export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
     path: "Müdafiə təhlükəsizliyi",
     module: "Blue Team təməli",
     sourceFile: "introduction-to-blue-team.md",
-    image: "/images/cyber_class_photo.jpg",
-    imageAlt: "Kibertəhlükəsizlik dərsində çalışan tələbələr",
+    image: "/images/blue_team.webp",
+    imageAlt: "Blue Team müdafiə əməliyyatlarını idarə edən təhlükəsizlik komandası",
     taskGroups: [1, 2, 3, 4, 5].map((index) => ({
       id: `blue-team-${index}`,
       title: `Task ${index}`,
@@ -165,8 +165,8 @@ export const LOCAL_ROOM_CATALOG: readonly LocalRoomDefinition[] = [
     path: "Müdafiə təhlükəsizliyi",
     module: "SOC və log analizi",
     sourceFile: "soc-analysis-windows-event-logs-sysmon.md",
-    image: "/images/database_photo.jpg",
-    imageAlt: "SOC məlumat və log analizi ekranları",
+    image: "/images/soc_photo.jpg",
+    imageAlt: "SOC və təhlükəsizlik loglarının analizini göstərən əməliyyat ekranı",
     taskGroups: [1, 2, 3, 4, 5].map((index) => ({
       id: `soc-logs-${index}`,
       title: `Task ${index}`,

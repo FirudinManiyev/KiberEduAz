@@ -3,13 +3,18 @@
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
 import {
+  Activity,
   BookPlus,
   Check,
+  GraduationCap,
   Loader2,
   Plus,
+  Radar,
   Trash2,
   Users,
 } from "lucide-react";
+import { CyberHeroShell } from "@/components/hero/cyber-hero-shell";
+import { ProgressiveDisclosure } from "@/components/ui/progressive-disclosure";
 import { apiRequest } from "@/lib/api/client";
 import type {
   ClassDetail,
@@ -18,6 +23,7 @@ import type {
   PathTreeNode,
   RoomSummary,
 } from "@/lib/api/types";
+import { getProgressiveListState } from "@/lib/ui/progressive-list";
 
 type Props = {
   profile: MyProfile;
@@ -48,6 +54,9 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [roomsExpanded, setRoomsExpanded] = useState(false);
+  const [classesExpanded, setClassesExpanded] = useState(false);
+  const [studentsExpanded, setStudentsExpanded] = useState(false);
 
   const modules = useMemo(
     () =>
@@ -79,6 +88,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
   async function loadClass(id: string) {
     if (!id) return;
     setActiveClassId(id);
+    setStudentsExpanded(false);
     const detail = await apiRequest<ClassDetail>(`/classes/${id}`);
     setClassDetail(detail);
   }
@@ -226,16 +236,58 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
 
   const draftRooms = rooms.filter((room) => room.status === "DRAFT");
   const publishedRooms = rooms.filter((room) => room.status === "PUBLISHED");
+  const roomList = getProgressiveListState(rooms, roomsExpanded);
+  const classList = getProgressiveListState(classes, classesExpanded);
+  const students = classDetail?.students ?? [];
+  const studentList = getProgressiveListState(students, studentsExpanded);
 
   return (
-    <div className="mx-auto max-w-[1440px] space-y-10 px-4 py-10 sm:px-6 lg:px-10">
-      <header>
-        <p className="section-kicker">Müəllim paneli</p>
-        <h1 className="section-title">Salam, {profile.fullName ?? profile.email}</h1>
-        <p className="mt-2 max-w-2xl text-sm text-slate-500">
-          Modul və Room yarat, sinfə mövcud şagirdləri email ilə qoş. Room-lar admin təsdiqindən sonra şagirdlərə görünür.
-        </p>
-      </header>
+    <div className="space-y-10 pb-10">
+      <CyberHeroShell ariaLabelledby="teacher-hero-heading">
+        <div className="mx-auto grid min-h-[inherit] max-w-[1440px] gap-10 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.05fr_.95fr] lg:items-center lg:px-10 lg:py-20">
+          <header className="max-w-2xl">
+            <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-300/20 bg-black/35 px-3 py-1.5 text-[11px] font-semibold text-emerald-100 backdrop-blur-md">
+              <Radar className="size-3.5" aria-hidden="true" /> Müəllim idarəetmə mərkəzi
+            </p>
+            <h1
+              id="teacher-hero-heading"
+              className="text-balance text-4xl font-semibold leading-[1.05] tracking-[-0.055em] text-white drop-shadow-[0_8px_28px_rgba(0,0,0,.45)] sm:text-5xl lg:text-[60px]"
+            >
+              Salam,
+              <br />
+              <span className="text-gradient">{profile.fullName ?? profile.email}</span>
+            </h1>
+            <p className="mt-6 max-w-xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">
+              Modulları, Room-ları və sinifləri vahid mərkəzdən idarə et. Yeni təlim hazırladıqda admin təsdiqindən sonra şagirdlərin öyrənmə axınına qoşulur.
+            </p>
+          </header>
+
+          <div className="cyber-hero-panel p-5 sm:p-6">
+            <div className="relative flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
+              <div>
+                <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300">
+                  <Activity className="size-3.5" aria-hidden="true" /> Canlı tədris göstəriciləri
+                </p>
+                <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">Sinif əməliyyatları</h2>
+              </div>
+              <span className="grid size-11 place-items-center rounded-2xl border border-red-300/20 bg-red-300/[0.08] text-red-200">
+                <GraduationCap className="size-5" aria-hidden="true" />
+              </span>
+            </div>
+            <div className="relative mt-5 grid gap-3 sm:grid-cols-3">
+              <Stat label="Siniflər" value={classes.length} />
+              <Stat label="Gözləyən Room" value={draftRooms.length} />
+              <Stat label="Açıq Room" value={publishedRooms.length} />
+            </div>
+            <p className="relative mt-5 flex items-center gap-2 border-t border-white/[0.08] pt-4 text-[11px] text-slate-500">
+              <i className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.9)]" />
+              Məlumatlar hesabınızla sinxronlaşdırılır
+            </p>
+          </div>
+        </div>
+      </CyberHeroShell>
+
+      <div className="mx-auto max-w-[1440px] space-y-10 px-4 sm:px-6 lg:px-10">
 
       {(message || error) && (
         <p
@@ -249,12 +301,6 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
           {error ?? message}
         </p>
       )}
-
-      <section className="grid gap-4 sm:grid-cols-3">
-        <Stat label="Siniflər" value={classes.length} />
-        <Stat label="Gözləyən Room" value={draftRooms.length} />
-        <Stat label="Açıq Room" value={publishedRooms.length} />
-      </section>
 
       <div className="grid gap-8 xl:grid-cols-2">
         <Panel title="Modul yarat" icon={<BookPlus className="size-4" />}>
@@ -343,7 +389,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       <Panel title="Room-ların" icon={<Check className="size-4" />}>
         <div className="divide-y divide-white/[0.06]">
           {rooms.length === 0 && <p className="py-4 text-sm text-slate-500">Hələ Room yoxdur.</p>}
-          {rooms.map((room) => (
+          {roomList.visibleItems.map((room) => (
             <div key={room.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div>
                 <p className="text-sm font-semibold text-slate-100">{room.title}</p>
@@ -360,6 +406,13 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
             </div>
           ))}
         </div>
+        {roomList.canToggle && (
+          <ProgressiveDisclosure
+            expanded={roomsExpanded}
+            hiddenCount={roomList.hiddenCount}
+            onToggle={() => setRoomsExpanded((current) => !current)}
+          />
+        )}
       </Panel>
 
       <div className="grid gap-8 xl:grid-cols-[340px_minmax(0,1fr)]">
@@ -372,7 +425,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
             </button>
           </form>
           <div className="space-y-1">
-            {classes.map((item) => (
+            {classList.visibleItems.map((item) => (
               <button
                 key={item.id}
                 type="button"
@@ -388,6 +441,14 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
               </button>
             ))}
           </div>
+          {classList.canToggle && (
+            <ProgressiveDisclosure
+              expanded={classesExpanded}
+              hiddenCount={classList.hiddenCount}
+              onToggle={() => setClassesExpanded((current) => !current)}
+              className="w-full"
+            />
+          )}
         </Panel>
 
         <Panel title="Şagirdləri qoş" icon={<Users className="size-4" />}>
@@ -408,12 +469,12 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
                 </button>
               </form>
               <div className="divide-y divide-white/[0.06]">
-                {(classDetail?.students ?? []).length === 0 && (
+                {students.length === 0 && (
                   <p className="py-3 text-sm text-slate-500">
                     Sinif boşdur. Artıq qeydiyyatdan keçmiş şagirdin emailini yaz.
                   </p>
                 )}
-                {(classDetail?.students ?? []).map((student) => (
+                {studentList.visibleItems.map((student) => (
                   <div key={student.id} className="flex items-center justify-between gap-3 py-3">
                     <div>
                       <p className="text-sm font-semibold text-slate-100">
@@ -432,9 +493,17 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
                   </div>
                 ))}
               </div>
+              {studentList.canToggle && (
+                <ProgressiveDisclosure
+                  expanded={studentsExpanded}
+                  hiddenCount={studentList.hiddenCount}
+                  onToggle={() => setStudentsExpanded((current) => !current)}
+                />
+              )}
             </>
           )}
         </Panel>
+      </div>
       </div>
     </div>
   );
@@ -464,9 +533,9 @@ function Panel({
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <article className="rounded-2xl border border-red-300/10 bg-[#1a1d20] p-5">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-2 text-2xl font-semibold text-white">{value}</p>
+    <article className="teacher-hero-stat">
+      <p className="text-[11px] leading-4 text-slate-500">{label}</p>
+      <p className="mt-2 text-2xl font-semibold text-white">{String(value).padStart(2, "0")}</p>
     </article>
   );
 }

@@ -5,7 +5,7 @@ import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicat
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { DIFFICULTY_LABELS, ROOM_TYPE_LABELS } from "@/lib/api/labels";
 import type { RoomSummary } from "@/lib/api/types";
-import { API_ROOM_PRESENTATION } from "@/lib/content/catalog";
+import { resolveRoomArtwork } from "@/lib/content/room-artwork";
 import type { LearningRoomSummary } from "@/lib/content/types";
 
 type RoomCardProps = {
@@ -17,9 +17,9 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
   const isGreen = room.accent === "GREEN";
   const CategoryIcon = room.category === "GRC" ? FileCheck2 : Crosshair;
   const percent = room.progress.percent;
-  const presentation = "image" in room ? room : API_ROOM_PRESENTATION[room.slug];
-  const image = presentation?.image ?? "/images/computer_photo.png";
-  const imageAlt = presentation?.imageAlt ?? `${room.title} üçün təlim təsviri`;
+  const presentation = "image" in room ? room : resolveRoomArtwork(room);
+  const image = presentation.image;
+  const imageAlt = presentation.imageAlt;
   const progressMode = "progressMode" in room ? room.progressMode : "api";
 
   return (

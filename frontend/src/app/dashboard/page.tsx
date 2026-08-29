@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   ChevronRight,
   CircleDot,
-  Clock3,
   Flame,
   Gauge,
   Map,
@@ -22,7 +21,9 @@ import {
   Zap,
 } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
+import { CyberHeroShell } from "@/components/hero/cyber-hero-shell";
 import { CommandConsole } from "@/components/home/command-console";
+import { ProgressiveRoomRoadmap } from "@/components/home/progressive-room-roadmap";
 import { RoomCard } from "@/components/room/room-card";
 import { apiFetch, apiFetchOrNull } from "@/lib/api/server";
 import type {
@@ -133,17 +134,14 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <section className="relative border-b border-white/[0.06]">
-        <div className="hero-glow absolute inset-0 -z-10" />
-        <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.14]" />
-        <div className="hero-scan" />
-        <div className="mx-auto grid max-w-[1440px] gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:px-10 lg:py-20">
+      <CyberHeroShell ariaLabelledby="student-hero-heading">
+        <div className="mx-auto grid min-h-[inherit] max-w-[1440px] gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.02fr_.98fr] lg:items-center lg:px-10 lg:py-20">
           <div className="max-w-2xl">
             <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-red-300/15 bg-red-300/[0.055] px-3 py-1.5 text-[11px] font-semibold text-red-200 shadow-[0_0_30px_rgba(239,68,68,.06)]">
               <Radar className="size-3.5 animate-pulse" aria-hidden="true" />
               Təhlükəni görməyi öyrən
             </div>
-            <h1 className="text-balance text-4xl font-semibold leading-[1.04] tracking-[-0.06em] text-white sm:text-5xl lg:text-[67px]">
+            <h1 id="student-hero-heading" className="text-balance text-4xl font-semibold leading-[1.04] tracking-[-0.06em] text-white drop-shadow-[0_8px_28px_rgba(0,0,0,.45)] sm:text-5xl lg:text-[67px]">
               Kiber dünyanı<br />
               <span className="text-gradient">missiyalarla fəth et.</span>
             </h1>
@@ -171,7 +169,7 @@ export default async function DashboardPage() {
               ].map((item) => {
                 const Icon = item.icon;
                 return (
-                  <div key={item.label} className="hero-mini-stat group">
+                  <div key={item.label} className="hero-mini-stat group bg-black/30 backdrop-blur-md">
                     <Icon className="size-4 text-emerald-400 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110" />
                     <p className="mt-2 text-lg font-semibold text-white">{item.value}</p>
                     <p className="mt-0.5 text-[10px] text-slate-600">{item.label}</p>
@@ -181,12 +179,12 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="relative mx-auto w-full max-w-[610px] lg:mr-0">
+          <div className="cyber-hero-console relative mx-auto w-full max-w-[610px] lg:mr-0">
             <div className="absolute -inset-12 -z-10 rounded-full bg-red-500/[0.045] blur-3xl" />
             <CommandConsole />
           </div>
         </div>
-      </section>
+      </CyberHeroShell>
 
       <div className="mx-auto max-w-[1440px] px-4 py-12 sm:px-6 lg:px-10 lg:py-16">
         <section aria-labelledby="overview-heading">
@@ -260,14 +258,7 @@ export default async function DashboardPage() {
               <div className="relative p-5 sm:p-7">
                 <div className="road-line absolute bottom-[69px] left-12 top-[65px] w-px sm:left-[53px]" />
                 <div className="space-y-4">
-                  {rooms.map((room, index) => (
-                    <Link key={room.slug} href={`/rooms/${room.slug}`} prefetch className="road-node group relative flex items-center gap-4 rounded-xl border border-white/[0.065] bg-white/[0.02] p-4 transition-all hover:translate-x-1 hover:border-white/[0.13] hover:bg-white/[0.04]">
-                      <span className={`relative z-10 grid size-11 shrink-0 place-items-center rounded-xl border text-xs font-bold ${room.progress.status === "COMPLETED" ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-300" : "border-red-300/25 bg-red-300/10 text-red-300"}`}>{String(index + 1).padStart(2, "0")}</span>
-                      <span className="min-w-0 flex-1"><span className="block text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">{room.module}</span><span className="mt-1 block truncate text-sm font-semibold text-slate-200">{room.title}</span></span>
-                      <span className="hidden items-center gap-1.5 text-[10px] text-slate-600 sm:flex"><Clock3 className="size-3" />{room.durationLabel}</span>
-                      <ChevronRight className="size-4 text-slate-700 transition-all group-hover:translate-x-1 group-hover:text-white" />
-                    </Link>
-                  ))}
+                  <ProgressiveRoomRoadmap rooms={rooms} />
                   <div className="relative flex items-center gap-4 rounded-xl border border-dashed border-white/[0.07] p-4 opacity-60">
                     <span className="relative z-10 grid size-11 shrink-0 place-items-center rounded-xl border border-white/[0.08] bg-[#1a1d1f] text-slate-600"><CircleDot className="size-4" /></span>
                     <span><span className="block text-[10px] uppercase tracking-[0.13em] text-slate-700">Növbəti mərhələ</span><span className="mt-1 block text-sm font-medium text-slate-500">Şəbəkə müdafiəsi · tezliklə</span></span>

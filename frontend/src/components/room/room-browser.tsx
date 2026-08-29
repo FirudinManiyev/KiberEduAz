@@ -3,7 +3,9 @@
 import { Search, ShieldX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { RoomCard } from "@/components/room/room-card";
+import { ProgressiveDisclosure } from "@/components/ui/progressive-disclosure";
 import type { LearningRoomSummary } from "@/lib/content/types";
+import { getProgressiveListState } from "@/lib/ui/progressive-list";
 
 type RoomBrowserProps = {
   rooms: LearningRoomSummary[];
@@ -14,6 +16,7 @@ const ALL = "Hamısı";
 export function RoomBrowser({ rooms }: RoomBrowserProps) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<string>(ALL);
+  const [expanded, setExpanded] = useState(false);
 
   // Categories come from the content itself, so a new Path added by a teacher
   // shows up here without a code change.
@@ -37,6 +40,7 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
       return matchesFilter && matchesQuery;
     });
   }, [filter, query, rooms]);
+  const list = getProgressiveListState(visibleRooms, expanded);
 
   return (
     <div>
@@ -48,7 +52,10 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
             id="room-search"
             type="search"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setExpanded(false);
+            }}
             placeholder="Mövzu və ya Room axtar..."
             className="h-11 w-full rounded-xl border border-white/[0.08] bg-black/20 pl-10 pr-4 text-sm text-white outline-none transition-colors placeholder:text-slate-600 focus:border-emerald-300/35 focus:ring-2 focus:ring-emerald-300/10"
           />
@@ -59,7 +66,10 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
             <button
               key={item}
               type="button"
-              onClick={() => setFilter(item)}
+              onClick={() => {
+                setFilter(item);
+                setExpanded(false);
+              }}
               className={`shrink-0 rounded-lg px-3.5 py-2 text-xs font-semibold transition-all ${
                 filter === item
                   ? "bg-white/[0.09] text-white shadow-sm"
@@ -74,13 +84,16 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
       </div>
 
       <div className="mb-4 flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between" aria-live="polite">
-        <span>{visibleRooms.length} Room göstərilir</span>
+        <span>
+          {visibleRooms.length} Room tapıldı
+          {list.canToggle ? ` · ${list.visibleItems.length} göstərilir` : ""}
+        </span>
         <span>Məzmun səviyyəsinə görə sıralanıb</span>
       </div>
 
       {visibleRooms.length > 0 ? (
         <div className="grid gap-5 md:grid-cols-2">
-          {visibleRooms.map((room) => (
+          {list.visibleItems.map((room) => (
             <RoomCard key={room.slug} room={room} />
           ))}
         </div>
@@ -94,6 +107,14 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
             <p className="mt-2 text-sm text-slate-500">Axtarış sözünü və ya filtri dəyişərək yenidən yoxla.</p>
           </div>
         </div>
+      )}
+
+      {visibleRooms.length > 0 && list.canToggle && (
+        <ProgressiveDisclosure
+          expanded={expanded}
+          hiddenCount={list.hiddenCount}
+          onToggle={() => setExpanded((current) => !current)}
+        />
       )}
     </div>
   );
