@@ -26,7 +26,7 @@ const contactCards = [
     icon: Clock3,
     label: "Cavab müddəti",
     value: "1–2 iş günü",
-    note: "MVP komanda rejimi",
+    note: "Komandanın standart cavab müddəti",
     tone: "red",
   },
 ];
@@ -42,7 +42,7 @@ const faqs = [
   },
   {
     question: "Real virtual maşın və ya hücum laboratoriyası varmı?",
-    answer: "MVP-də real VM istifadə edilmir. Praktika log analizi, phishing araşdırması və interaktiv sual ssenariləri üzərində qurulub.",
+    answer: "Platformada real VM istifadə edilmir. Praktika log analizi, phishing araşdırması və interaktiv sual ssenariləri üzərində qurulub.",
   },
 ];
 
@@ -120,7 +120,7 @@ export default function ContactPage() {
                 </span>
                 <div>
                   <p className="text-sm font-semibold text-white">Tez-tez verilən suallar</p>
-                  <p className="mt-0.5 text-[10px] text-slate-600">MVP haqqında qısa cavablar</p>
+                  <p className="mt-0.5 text-[10px] text-slate-600">Platforma haqqında qısa cavablar</p>
                 </div>
               </div>
 

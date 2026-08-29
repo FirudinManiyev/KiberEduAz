@@ -1,5 +1,5 @@
 const SIGNALS = [
-  { tone: "bg-emerald-400", text: "MƏRHƏLƏ: MVP · MƏZMUN ARTIR" },
+  { tone: "bg-emerald-400", text: "PLATFORMA AKTİVDİR · MƏZMUN ARTIR" },
   { tone: "bg-red-400", text: "REAL VM YOXDUR · SSENARİ SİMULYASİYASI" },
   { tone: "bg-emerald-400", text: "OXU → PRAKTİKA → YOXLANIŞ → XAL" },
   { tone: "bg-red-400", text: "REYTİNQ SİNİF DAXİLİNDƏ QALIR" },

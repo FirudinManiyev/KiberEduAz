@@ -47,27 +47,15 @@ button, a { touch-action: manipulation; }
 
 /* Brand */
 .brand-mark {
-  position: relative;
-  display: grid;
+  display: block;
   flex-shrink: 0;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid rgba(248, 113, 113, 0.45);
-  background: linear-gradient(145deg, #282c2e, #141719);
-  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.05) inset, 0 0 28px rgba(239, 68, 68, 0.08);
-  clip-path: polygon(17% 0, 83% 0, 100% 17%, 100% 83%, 83% 100%, 17% 100%, 0 83%, 0 17%);
-  transition: transform 320ms ease, border-color 320ms ease, box-shadow 320ms ease;
+  transition: filter 320ms ease, transform 320ms ease;
 }
-.brand-mark--sm { width: 1.9rem; height: 1.9rem; }
-.brand-mark--md { width: 2.35rem; height: 2.35rem; }
-.brand-mark--lg { width: 4.5rem; height: 4.5rem; }
-.group:hover .brand-mark { transform: rotate(-4deg) scale(1.06); border-color: rgba(52, 211, 153, 0.62); box-shadow: 0 0 26px rgba(52, 211, 153, 0.12); }
-.brand-mark__letter { position: relative; z-index: 2; color: #fff; font-size: 1.08rem; font-weight: 850; letter-spacing: -0.08em; }
-.brand-mark--sm .brand-mark__letter { font-size: 0.85rem; }
-.brand-mark--lg .brand-mark__letter { font-size: 2rem; }
-.brand-mark__scan { position: absolute; inset: -80% -20%; background: linear-gradient(100deg, transparent 35%, rgba(239, 68, 68, 0.23), transparent 65%); transform: translateX(-60%); animation: brand-scan 3.4s ease-in-out infinite; }
-.brand-mark__status { position: absolute; right: 14%; bottom: 14%; z-index: 3; width: 5px; height: 5px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
-.brand-mark--lg .brand-mark__status { width: 8px; height: 8px; }
+.brand-mark--sm { width: 6.5rem; }
+.brand-mark--md { width: 9.5rem; }
+.brand-mark--lg { width: 13.5rem; }
+.brand-mark__image { display: block; width: 100%; height: auto; object-fit: contain; }
+.group:hover .brand-mark { filter: drop-shadow(0 0 14px rgba(52, 211, 153, 0.16)); transform: scale(1.025); }
 
 /* Entrance and route feedback */
 .site-loader { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; overflow: hidden; background: #131517; transition: opacity 360ms ease, visibility 360ms ease; }
@@ -255,7 +243,6 @@ footer { z-index:10; }
 .local-lesson-table tr:hover td { background:rgba(52,211,153,.025); }
 
 /* Keyframes */
-@keyframes brand-scan { 0%,35%{transform:translateX(-80%)} 70%,100%{transform:translateX(90%)} }
 @keyframes loader-grid { to{background-position:44px 44px} }
 @keyframes loader-progress { from{transform:scaleX(0)} to{transform:scaleX(1)} }
 @keyframes route-beam { from{transform:translateX(-120%)} to{transform:translateX(370%)} }
@@ -282,7 +269,6 @@ footer { z-index:10; }
 }
 
 @media (hover: none), (pointer: coarse) {
-  .brand-mark__scan,
   .hero-scan::after,
   .card-scanline,
   .button-sheen { display:none; }

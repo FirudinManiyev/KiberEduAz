@@ -1,15 +1,24 @@
+import Image from "next/image";
 import Link from "next/link";
 
 type BrandMarkProps = {
   size?: "sm" | "md" | "lg";
+  alt?: string;
 };
 
-export function BrandMark({ size = "md" }: BrandMarkProps) {
+const BRAND_ALT = "KiberEduAz — Kibertəhlükəsizlik Öyrənmə Platforması";
+
+export function BrandMark({ size = "md", alt = "" }: BrandMarkProps) {
   return (
-    <span className={`brand-mark brand-mark--${size}`} aria-hidden="true">
-      <span className="brand-mark__scan" />
-      <span className="brand-mark__letter">K</span>
-      <span className="brand-mark__status" />
+    <span className={`brand-mark brand-mark--${size}`} aria-hidden={alt ? undefined : true}>
+      <Image
+        src="/kibereduaz_logo.png"
+        alt={alt}
+        width={2154}
+        height={922}
+        sizes={size === "lg" ? "216px" : size === "sm" ? "104px" : "152px"}
+        className="brand-mark__image"
+      />
     </span>
   );
 }
@@ -23,15 +32,10 @@ export function Logo({ compact = false }: LogoProps) {
     <Link
       href="/"
       prefetch
-      className="group inline-flex items-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-      aria-label="KiberEduAz — əsas səhifə"
+      className="group inline-flex items-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+      aria-label={`${BRAND_ALT} — əsas səhifə`}
     >
-      <BrandMark />
-      {!compact && (
-        <span className="text-[17px] font-semibold tracking-[-0.04em] text-white">
-          KiberEdu<span className="text-emerald-400 transition-colors group-hover:text-red-400">Az</span>
-        </span>
-      )}
+      <BrandMark size={compact ? "sm" : "md"} alt={BRAND_ALT} />
     </Link>
   );
 }

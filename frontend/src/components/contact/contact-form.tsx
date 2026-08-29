@@ -57,7 +57,7 @@ export function ContactForm() {
         </div>
 
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-[10px] leading-4 text-slate-600">MVP formudur — məlumat serverə göndərilmir.</p>
+          <p className="text-[10px] leading-4 text-slate-600">Mesaj önbaxışıdır — məlumat serverə göndərilmir.</p>
           <button type="submit" className="primary-action group sm:min-w-40">
             Mesajı hazırla
             <Send className="size-4 transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" aria-hidden="true" />

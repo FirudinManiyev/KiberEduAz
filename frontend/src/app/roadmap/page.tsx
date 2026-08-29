@@ -69,7 +69,7 @@ export default function RoadmapPage() {
             <div className="relative flex items-center gap-4 p-5">
               <span className="grid size-12 place-items-center rounded-2xl border border-emerald-300/20 bg-emerald-300/10 text-emerald-300"><Target className="size-5" /></span>
               <div className="flex-1">
-                <div className="flex justify-between text-[10px]"><span className="font-semibold uppercase tracking-wider text-slate-500">MVP kataloqu</span><span className="font-mono text-emerald-400">100%</span></div>
+                <div className="flex justify-between text-[10px]"><span className="font-semibold uppercase tracking-wider text-slate-500">Mövcud kataloq</span><span className="font-mono text-emerald-400">100%</span></div>
                 <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/[0.06]"><div className="h-full w-full rounded-full bg-gradient-to-r from-red-500 via-sky-400 to-emerald-400" /></div>
                 <p className="mt-2 text-[10px] text-slate-600">Yeddi Room artıq öyrənmək üçün açıqdır</p>
               </div>

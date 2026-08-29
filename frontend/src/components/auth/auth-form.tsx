@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
+  ArrowLeft,
   ArrowRight,
   Building2,
   Loader2,
@@ -180,8 +181,20 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.14]" />
 
       <div className="relative w-full max-w-md">
-        <div className="mb-8 flex justify-center">
+        <div className="mb-6 flex flex-col items-center gap-3">
           <Logo />
+          <Link
+            href="/"
+            prefetch
+            aria-label="Ana səhifəyə qayıt"
+            className="group inline-flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 transition-colors hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          >
+            <ArrowLeft
+              className="size-3.5 transition-transform group-hover:-translate-x-1"
+              aria-hidden="true"
+            />
+            Ana səhifəyə qayıt
+          </Link>
         </div>
 
         <div className="rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 p-6 shadow-[0_30px_100px_rgba(0,0,0,.35)] backdrop-blur sm:p-8">

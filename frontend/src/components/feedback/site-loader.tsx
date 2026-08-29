@@ -26,10 +26,7 @@ export function SiteLoader() {
       <div className="site-loader__orb site-loader__orb--green" />
       <div className="site-loader__content">
         <BrandMark size="lg" />
-        <p className="mt-5 text-xl font-semibold tracking-[-0.04em] text-white">
-          KiberEdu<span className="text-emerald-400">Az</span>
-        </p>
-        <div className="site-loader__terminal mt-4">
+        <div className="site-loader__terminal mt-5">
           <span className="text-emerald-400">$</span>
           <span>sistem hazırlanır</span>
           <span className="site-loader__cursor" />
