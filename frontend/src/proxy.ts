@@ -7,6 +7,7 @@ const PUBLIC_PREFIXES = [
   "/login",
   "/register",
   "/auth",
+  "/about",
   "/contact",
   "/faq",
   "/opengraph-image",

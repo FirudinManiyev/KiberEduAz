@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ChromeGate } from "@/components/layout/chrome-gate";
+import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { SiteFooterContainer } from "@/components/layout/site-footer-container";
 import { SiteHeaderContainer } from "@/components/layout/site-header-container";
 import { SiteLoader } from "@/components/feedback/site-loader";
 import { AppToaster } from "@/components/feedback/app-toaster";
+import { KiberBot } from "@/components/kiberbot/kiberbot";
 import { GlobalSilkBackground } from "@/components/effects/global-silk-background";
+import { ScrollRevealController } from "@/components/effects/scroll-reveal-controller";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -46,11 +49,18 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className="flex min-h-full flex-col">
         <SiteLoader />
         <GlobalSilkBackground />
+        <ScrollRevealController />
         <ChromeGate>
           <SiteHeaderContainer />
         </ChromeGate>
+        <ChromeGate>
+          <Breadcrumbs />
+        </ChromeGate>
         {children}
         <AppToaster />
+        <ChromeGate>
+          <KiberBot />
+        </ChromeGate>
         <ChromeGate>
           <SiteFooterContainer />
         </ChromeGate>

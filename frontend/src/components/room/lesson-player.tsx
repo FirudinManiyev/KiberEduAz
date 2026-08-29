@@ -22,6 +22,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { LessonMarkdown } from "@/components/room/lesson-markdown";
 import { apiRequest } from "@/lib/api/client";
+import { toUserErrorMessage } from "@/lib/errors/user-error";
 import type { AnswerResult, RoomDetail, TaskCompletionResult } from "@/lib/api/types";
 
 type LessonPlayerProps = {
@@ -141,7 +142,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
         });
       }
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Cavab göndərilə bilmədi";
+      const message = toUserErrorMessage(cause, "Cavab göndərilə bilmədi");
       patchQuestion(questionId, {
         pending: false,
         selectedOptionId: null,
@@ -181,7 +182,7 @@ export function LessonPlayer({ room }: LessonPlayerProps) {
           : "Progress hesabında saxlanıldı.",
       });
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Task tamamlana bilmədi";
+      const message = toUserErrorMessage(cause, "Task tamamlana bilmədi");
       toast.error(message, { id: "task-complete" });
     } finally {
       setCompletingTaskId(null);

@@ -1,6 +1,8 @@
 import type { UserRole } from "@/lib/api/types";
 
 export type NavigationIcon =
+  | "home"
+  | "about"
   | "dashboard"
   | "rooms"
   | "roadmap"
@@ -22,7 +24,8 @@ export type NavigationLink = {
 export type MobileNavigationItem = NavigationLink | { kind: "signout"; label: string };
 
 const guestNavigation: NavigationLink[] = [
-  link("Ana səhifə", "/", "dashboard"),
+  link("Ana səhifə", "/", "home"),
+  link("Haqqımızda", "/about", "about"),
   link("FAQ", "/faq", "faq"),
   link("Əlaqə", "/contact", "contact"),
 ];
@@ -31,32 +34,40 @@ export function navigationFor(role: UserRole | undefined, pending: boolean): Nav
   if (!role) return guestNavigation;
   if (pending) {
     return [
+      link("Ana səhifə", "/", "home"),
       link("Gözləmə", "/pending", "shield"),
+      link("Haqqımızda", "/about", "about"),
       link("FAQ", "/faq", "faq"),
       link("Əlaqə", "/contact", "contact"),
     ];
   }
   if (role === "ADMIN") {
     return [
+      link("Ana səhifə", "/", "home"),
       link("Admin", "/admin", "shield"),
       link("Room-lar", "/rooms", "rooms"),
+      link("Haqqımızda", "/about", "about"),
       link("FAQ", "/faq", "faq"),
       link("Əlaqə", "/contact", "contact"),
     ];
   }
   if (role === "TEACHER") {
     return [
+      link("Ana səhifə", "/", "home"),
       link("Müəllim", "/teacher", "dashboard"),
       link("Room-lar", "/rooms", "rooms"),
       link("Roadmap", "/roadmap", "roadmap"),
+      link("Haqqımızda", "/about", "about"),
       link("FAQ", "/faq", "faq"),
       link("Əlaqə", "/contact", "contact"),
     ];
   }
   return [
+    link("Ana səhifə", "/", "home"),
     link("İdarə paneli", "/dashboard", "dashboard"),
     link("Room-lar", "/rooms", "rooms"),
     link("Roadmap", "/roadmap", "roadmap"),
+    link("Haqqımızda", "/about", "about"),
     link("FAQ", "/faq", "faq"),
     link("Əlaqə", "/contact", "contact"),
   ];

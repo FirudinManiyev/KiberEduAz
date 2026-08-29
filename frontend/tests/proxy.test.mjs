@@ -38,3 +38,11 @@ test("a signed-out visitor can open the public FAQ", async () => {
   assert.equal(response.status, 200);
   assert.equal(response.headers.get("location"), null);
 });
+
+test("a signed-out visitor can open the public about page", async () => {
+  currentUser = null;
+  const response = await proxy(new NextRequest("http://localhost:3000/about"));
+
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("location"), null);
+});

@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Award, BellRing, BookOpen, CheckCheck, Flame, Info, Loader2, ShieldAlert, Trophy } from "lucide-react";
 import { useMemo, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 import { apiRequest } from "@/lib/api/client";
+import { toUserErrorMessage } from "@/lib/errors/user-error";
 import type { NotificationFeed, ProgressSummary } from "@/lib/api/types";
 
 type NotificationCenterProps = {
@@ -28,6 +30,7 @@ export function NotificationCenter({ feed, summary, classRank }: NotificationCen
   const router = useRouter();
   const [state, setState] = useState(feed);
   const [filter, setFilter] = useState<(typeof filters)[number]["key"]>("all");
+  const [markingAll, setMarkingAll] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const visibleItems = useMemo(
@@ -39,9 +42,23 @@ export function NotificationCenter({ feed, summary, classRank }: NotificationCen
   );
 
   async function markAllRead() {
-    const next = await apiRequest<NotificationFeed>("/notifications/read-all", { method: "POST" });
-    setState(next);
-    startTransition(() => router.refresh());
+    setMarkingAll(true);
+    toast.loading("Bildirişlər yenilənir…", { id: "notifications-read-all" });
+
+    try {
+      const next = await apiRequest<NotificationFeed>("/notifications/read-all", { method: "POST" });
+      setState(next);
+      toast.success("Bütün bildirişlər oxunmuş kimi qeyd edildi", {
+        id: "notifications-read-all",
+      });
+      startTransition(() => router.refresh());
+    } catch (cause) {
+      toast.error(toUserErrorMessage(cause, "Bildirişlər yenilənə bilmədi"), {
+        id: "notifications-read-all",
+      });
+    } finally {
+      setMarkingAll(false);
+    }
   }
 
   async function markRead(id: string) {
@@ -56,8 +73,9 @@ export function NotificationCenter({ feed, summary, classRank }: NotificationCen
     try {
       await apiRequest<NotificationFeed>(`/notifications/${id}/read`, { method: "POST" });
       startTransition(() => router.refresh());
-    } catch {
+    } catch (cause) {
       setState(feed);
+      toast.error(toUserErrorMessage(cause, "Bildiriş oxunmuş kimi qeyd edilə bilmədi"));
     }
   }
 
@@ -70,7 +88,7 @@ export function NotificationCenter({ feed, summary, classRank }: NotificationCen
               <button key={item.key} type="button" onClick={() => setFilter(item.key)} className={`shrink-0 rounded-lg px-3 py-2 text-[11px] font-semibold transition-all ${filter === item.key ? "bg-white/[0.09] text-white shadow" : "text-slate-600 hover:text-slate-300"}`}>{item.label}{item.key === "unread" && state.unreadCount > 0 && <span className="ml-1.5 rounded-full bg-red-500 px-1.5 py-0.5 text-[8px] text-white">{state.unreadCount}</span>}</button>
             ))}
           </div>
-          <button type="button" onClick={markAllRead} disabled={state.unreadCount === 0 || pending} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.07] px-3 py-2 text-[11px] font-semibold text-slate-500 transition-all hover:border-emerald-300/20 hover:bg-emerald-300/[0.05] hover:text-emerald-300 disabled:opacity-35">{pending ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCheck className="size-3.5" />}Hamısını oxunmuş et</button>
+          <button type="button" onClick={markAllRead} disabled={state.unreadCount === 0 || pending || markingAll} className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/[0.07] px-3 py-2 text-[11px] font-semibold text-slate-500 transition-all hover:border-emerald-300/20 hover:bg-emerald-300/[0.05] hover:text-emerald-300 disabled:opacity-35">{pending || markingAll ? <Loader2 className="size-3.5 animate-spin" /> : <CheckCheck className="size-3.5" />}Hamısını oxunmuş et</button>
         </div>
 
         <div className="divide-y divide-white/[0.055]" aria-live="polite">

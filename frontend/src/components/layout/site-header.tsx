@@ -6,6 +6,8 @@ import {
   Bell,
   BookOpen,
   HelpCircle,
+  Home,
+  Info,
   LayoutDashboard,
   LogIn,
   Map,
@@ -28,6 +30,8 @@ import {
 } from "@/lib/navigation";
 
 const NAVIGATION_ICONS: Record<NavigationIcon, typeof LayoutDashboard> = {
+  home: Home,
+  about: Info,
   dashboard: LayoutDashboard,
   rooms: BookOpen,
   roadmap: Map,

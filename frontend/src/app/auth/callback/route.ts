@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
+import { safeAuthCallbackReason } from "@/lib/auth/callback-error";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000/api/v1").replace(
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
   const linkError = searchParams.get("error_description") ?? searchParams.get("error");
 
   if (linkError) {
-    return NextResponse.redirect(`${origin}/login?authError=${encodeURIComponent(linkError)}`);
+    return NextResponse.redirect(`${origin}/login?authError=${safeAuthCallbackReason(linkError)}`);
   }
 
   if (!code && !(tokenHash && type)) {
@@ -69,7 +70,9 @@ export async function GET(request: NextRequest) {
     : await supabase.auth.verifyOtp({ token_hash: tokenHash!, type: type! });
 
   if (error) {
-    return NextResponse.redirect(`${origin}/login?authError=${encodeURIComponent(error.message)}`);
+    return NextResponse.redirect(
+      `${origin}/login?authError=${safeAuthCallbackReason(error.message)}`,
+    );
   }
 
   const {

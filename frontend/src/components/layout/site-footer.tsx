@@ -8,9 +8,11 @@ type SiteFooterProps = {
 export function SiteFooter({ signedIn = false }: SiteFooterProps) {
   const links = signedIn
     ? [
+        { href: "/", label: "Ana səhifə", tone: "emerald" as const },
         { href: "/dashboard", label: "İdarə paneli", tone: "emerald" as const },
         { href: "/rooms", label: "Room-lar", tone: "emerald" as const },
         { href: "/roadmap", label: "Roadmap", tone: "emerald" as const },
+        { href: "/about", label: "Haqqımızda", tone: "red" as const },
         { href: "/faq", label: "FAQ", tone: "red" as const },
         { href: "/contact", label: "Əlaqə", tone: "red" as const },
         { href: "/notifications", label: "Bildirişlər", tone: "red" as const },
@@ -18,6 +20,7 @@ export function SiteFooter({ signedIn = false }: SiteFooterProps) {
       ]
     : [
         { href: "/", label: "Ana səhifə", tone: "emerald" as const },
+        { href: "/about", label: "Haqqımızda", tone: "emerald" as const },
         { href: "/faq", label: "FAQ", tone: "red" as const },
         { href: "/contact", label: "Əlaqə", tone: "red" as const },
         { href: "/login", label: "Daxil ol", tone: "emerald" as const },

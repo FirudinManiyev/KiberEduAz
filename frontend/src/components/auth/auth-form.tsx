@@ -19,6 +19,7 @@ import { apiRequest } from "@/lib/api/client";
 import type { MyProfile } from "@/lib/api/types";
 import { authPendingLabel, type AuthMode } from "@/lib/auth/copy";
 import { homePathFor } from "@/lib/auth/home-path";
+import { toUserErrorMessage } from "@/lib/errors/user-error";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const COPY = {
@@ -167,7 +168,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       });
       router.refresh();
     } catch (cause) {
-      const message = translateAuthError(cause);
+      const message = toUserErrorMessage(
+        cause,
+        mode === "login" ? "Hesaba daxil olmaq mümkün olmadı" : "Hesab yaratmaq mümkün olmadı",
+      );
       setError(message);
       toast.error(message, { id: toastId });
     } finally {
@@ -333,30 +337,18 @@ function Field({
   );
 }
 
-function translateAuthError(cause: unknown): string {
-  const message = cause instanceof Error ? cause.message : String(cause);
-
-  if (/invalid login credentials/i.test(message)) return "E-poçt və ya şifrə yanlışdır.";
-  if (/already registered|already been registered/i.test(message)) return "Bu e-poçt artıq qeydiyyatdadır.";
-  if (/password should be at least/i.test(message)) return "Şifrə ən azı 8 simvol olmalıdır.";
-  if (/email not confirmed/i.test(message)) return "E-poçtunu təsdiqləməmisən. Gələn qutunu yoxla.";
-  if (/rate limit|too many/i.test(message)) return "Çox sayda cəhd. Bir az gözlə və yenidən yoxla.";
-
-  return message || "Gözlənilməz xəta baş verdi.";
-}
-
 /// Reasons /auth/callback can reject a confirmation link. Supabase words these in
 /// English on the query string, so map the common ones before showing them.
 function translateLinkError(reason: string): string {
   if (reason === "missing-code") {
     return "Təsdiq linki natamamdır. Aşağıdan yenidən daxil olmağa çalış.";
   }
-  if (/expired/i.test(reason)) {
+  if (reason === "expired-link" || /expired/i.test(reason)) {
     return "Təsdiq linkinin vaxtı bitib. Yenidən qeydiyyatdan keçib yeni link istə.";
   }
-  if (/already|used/i.test(reason)) {
+  if (reason === "used-link" || /already|used/i.test(reason)) {
     return "Bu link artıq istifadə olunub. Sadəcə daxil ol.";
   }
 
-  return `Təsdiq alınmadı: ${reason}`;
+  return "E-poçt təsdiqlənə bilmədi. Yeni link istəyib yenidən cəhd et.";
 }

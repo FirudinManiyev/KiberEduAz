@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { apiRequest } from "@/lib/api/client";
+import { toUserErrorMessage } from "@/lib/errors/user-error";
 import type {
   AdminStats,
   AdminUserRow,
@@ -58,7 +59,7 @@ export function AdminConsole({
       );
       await refreshStats();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Təsdiq uğursuz oldu");
+      setError(toUserErrorMessage(cause, "Müəllim təsdiqlənə bilmədi"));
     } finally {
       setBusyId(null);
     }
@@ -78,7 +79,7 @@ export function AdminConsole({
       );
       await refreshStats();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Rədd uğursuz oldu");
+      setError(toUserErrorMessage(cause, "Müraciət rədd edilə bilmədi"));
     } finally {
       setBusyId(null);
     }
@@ -93,7 +94,7 @@ export function AdminConsole({
       setPendingRooms((current) => current.filter((item) => item.id !== id));
       await refreshStats();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Room təsdiqi uğursuz oldu");
+      setError(toUserErrorMessage(cause, "Room təsdiqlənə bilmədi"));
     } finally {
       setBusyId(null);
     }
@@ -108,7 +109,7 @@ export function AdminConsole({
       setPendingRooms((current) => current.filter((item) => item.id !== id));
       await refreshStats();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Room rəddi uğursuz oldu");
+      setError(toUserErrorMessage(cause, "Room arxivlənə bilmədi"));
     } finally {
       setBusyId(null);
     }
@@ -136,7 +137,7 @@ export function AdminConsole({
       );
       await refreshStats();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Rol dəyişmədi");
+      setError(toUserErrorMessage(cause, "İstifadəçi rolu dəyişdirilə bilmədi"));
     } finally {
       setBusyId(null);
     }

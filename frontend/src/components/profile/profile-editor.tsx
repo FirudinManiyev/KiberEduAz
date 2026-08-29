@@ -6,6 +6,7 @@ import { AlertTriangle, Check, Loader2, Save, ShieldCheck, Sparkles } from "luci
 import { FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/client";
+import { toUserErrorMessage } from "@/lib/errors/user-error";
 import type { MyProfile, Rank } from "@/lib/api/types";
 
 const AVATARS = [
@@ -93,7 +94,7 @@ export function ProfileEditor({ profile, rank }: ProfileEditorProps) {
       });
       startTransition(() => router.refresh());
     } catch (cause) {
-      const message = cause instanceof Error ? cause.message : "Profil saxlanıla bilmədi";
+      const message = toUserErrorMessage(cause, "Profil saxlanıla bilmədi");
       setError(message);
       toast.error(message, { id: "profile-save" });
     } finally {

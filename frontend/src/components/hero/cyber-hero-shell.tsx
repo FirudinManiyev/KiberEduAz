@@ -18,6 +18,7 @@ export function CyberHeroShell({
     <section
       className={`cyber-hero relative isolate overflow-hidden border-b border-white/[0.07] ${className}`}
       aria-labelledby={ariaLabelledby}
+      data-reveal="none"
     >
       <Image
         src="/images/cyber_background.jpg"
@@ -38,4 +39,3 @@ export function CyberHeroShell({
     </section>
   );
 }
-

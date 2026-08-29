@@ -5,31 +5,10 @@ import {
   CheckCircle2,
   ChevronRight,
   Radar,
-  ShieldCheck,
-  SplitSquareVertical,
   Target,
-  Users,
 } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 import { CyberHeroShell } from "@/components/hero/cyber-hero-shell";
-
-const SIGNALS = [
-  {
-    icon: ShieldCheck,
-    title: "Real VM yoxdur",
-    text: "Ssenari və simulyasiya əsaslı praktika",
-  },
-  {
-    icon: SplitSquareVertical,
-    title: "Nəzəriyyə + praktika",
-    text: "Dərs və sual eyni ekranda",
-  },
-  {
-    icon: Users,
-    title: "Sinif reytinqi",
-    text: "Müqayisə qlobal deyil, sinifdaxilidir",
-  },
-];
 
 const MISSION_STEPS = [
   { label: "Mövzunu öyrən", detail: "Qısa və fokuslanmış dərs", status: "Hazır" },
@@ -80,22 +59,6 @@ export function LandingHero() {
             </Link>
           </div>
 
-          <ul className="mt-9 grid max-w-xl gap-2 sm:grid-cols-3 sm:gap-3">
-            {SIGNALS.map((signal) => {
-              const Icon = signal.icon;
-
-              return (
-                <li key={signal.title} className="hero-mini-stat group bg-black/30 backdrop-blur-md">
-                  <Icon
-                    className="size-4 text-emerald-400 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110"
-                    aria-hidden="true"
-                  />
-                  <p className="mt-2 text-sm font-semibold text-white">{signal.title}</p>
-                  <p className="mt-1 text-[11px] leading-4 text-slate-400">{signal.text}</p>
-                </li>
-              );
-            })}
-          </ul>
         </div>
 
         <div className="relative mx-auto w-full min-w-0 max-w-[600px] lg:mr-0">

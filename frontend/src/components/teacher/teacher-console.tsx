@@ -16,6 +16,7 @@ import {
 import { CyberHeroShell } from "@/components/hero/cyber-hero-shell";
 import { ProgressiveDisclosure } from "@/components/ui/progressive-disclosure";
 import { apiRequest } from "@/lib/api/client";
+import { toUserErrorMessage } from "@/lib/errors/user-error";
 import type {
   ClassDetail,
   ClassSummary,
@@ -54,6 +55,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loadingClassId, setLoadingClassId] = useState<string | null>(null);
   const [roomsExpanded, setRoomsExpanded] = useState(false);
   const [classesExpanded, setClassesExpanded] = useState(false);
   const [studentsExpanded, setStudentsExpanded] = useState(false);
@@ -85,12 +87,24 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
     setClasses(next);
   }
 
-  async function loadClass(id: string) {
-    if (!id) return;
+  async function loadClass(id: string): Promise<boolean> {
+    if (!id) return false;
     setActiveClassId(id);
     setStudentsExpanded(false);
-    const detail = await apiRequest<ClassDetail>(`/classes/${id}`);
-    setClassDetail(detail);
+    setLoadingClassId(id);
+    setError(null);
+
+    try {
+      const detail = await apiRequest<ClassDetail>(`/classes/${id}`);
+      setClassDetail(detail);
+      return true;
+    } catch (cause) {
+      setClassDetail(null);
+      setError(toUserErrorMessage(cause, "Sinif məlumatları yüklənə bilmədi"));
+      return false;
+    } finally {
+      setLoadingClassId(null);
+    }
   }
 
   async function createModule(event: FormEvent<HTMLFormElement>) {
@@ -118,7 +132,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       await refreshPaths();
       setMessage("Modul yaradıldı.");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Modul yaradıla bilmədi");
+      setError(toUserErrorMessage(cause, "Modul yaradıla bilmədi"));
     } finally {
       setBusy(false);
     }
@@ -156,7 +170,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       await refreshRooms();
       setMessage("Room yaradıldı (DRAFT). Admin təsdiqindən sonra şagirdlərə açılacaq.");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Room yaradıla bilmədi");
+      setError(toUserErrorMessage(cause, "Room yaradıla bilmədi"));
     } finally {
       setBusy(false);
     }
@@ -180,10 +194,14 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       });
       event.currentTarget.reset();
       await refreshClasses();
-      await loadClass(created.id);
-      setMessage("Sinif yaradıldı.");
+      const classLoaded = await loadClass(created.id);
+      setMessage(
+        classLoaded
+          ? "Sinif yaradıldı."
+          : "Sinif yaradıldı, amma məlumatları indi göstərmək mümkün olmadı.",
+      );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Sinif yaradıla bilmədi");
+      setError(toUserErrorMessage(cause, "Sinif yaradıla bilmədi"));
     } finally {
       setBusy(false);
     }
@@ -209,7 +227,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       await refreshClasses();
       setMessage("Şagird sinfə əlavə olundu.");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Şagird əlavə edilə bilmədi");
+      setError(toUserErrorMessage(cause, "Şagird sinfə əlavə edilə bilmədi"));
     } finally {
       setBusy(false);
     }
@@ -228,7 +246,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       setClassDetail(detail);
       await refreshClasses();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Silinmədi");
+      setError(toUserErrorMessage(cause, "Şagird sinifdən silinə bilmədi"));
     } finally {
       setBusy(false);
     }
@@ -430,6 +448,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
                 key={item.id}
                 type="button"
                 onClick={() => void loadClass(item.id)}
+                disabled={loadingClassId !== null}
                 className={`flex w-full items-center justify-between rounded-xl border px-3 py-2.5 text-left text-sm ${
                   activeClassId === item.id
                     ? "border-emerald-300/25 bg-emerald-300/[0.07] text-emerald-100"
@@ -437,7 +456,13 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
                 }`}
               >
                 <span>{item.name}</span>
-                <span className="font-mono text-[10px]">{item._count.memberships}</span>
+                <span className="font-mono text-[10px]">
+                  {loadingClassId === item.id ? (
+                    <Loader2 className="size-3.5 animate-spin" aria-label="Sinif yüklənir" />
+                  ) : (
+                    item._count.memberships
+                  )}
+                </span>
               </button>
             ))}
           </div>
