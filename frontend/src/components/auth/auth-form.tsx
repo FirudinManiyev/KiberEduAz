@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -180,137 +181,184 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   }
 
   return (
-    <main className="relative flex min-h-screen flex-1 items-center justify-center overflow-hidden px-4 py-12">
+    <main className="relative flex min-h-screen flex-1 items-center justify-center overflow-hidden px-3 py-4 sm:px-5 sm:py-8">
       <div className="hero-glow absolute inset-0 -z-10" />
       <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.14]" />
 
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 flex flex-col items-center gap-3">
-          <Logo />
-          <Link
-            href="/"
-            prefetch
-            aria-label="Ana səhifəyə qayıt"
-            className="group inline-flex items-center gap-2 rounded-lg px-2 py-1 text-xs font-semibold text-slate-400 transition-colors hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-          >
-            <ArrowLeft
-              className="size-3.5 transition-transform group-hover:-translate-x-1"
-              aria-hidden="true"
+      <div className="relative grid w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#171a1c]/95 shadow-[0_35px_120px_rgba(0,0,0,.42)] backdrop-blur-xl lg:grid-cols-[1.08fr_.92fr] lg:rounded-[2rem]">
+        <aside
+          aria-label="Kibertəhlükəsizlik öyrənmə vizualı"
+          className="relative min-h-[290px] overflow-hidden border-b border-white/[0.07] bg-[#111719] lg:min-h-[720px] lg:border-b-0 lg:border-r"
+        >
+          <div className="cyber-grid absolute inset-0 opacity-[0.22]" aria-hidden="true" />
+          <div
+            className="absolute left-1/2 top-1/2 size-[440px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/[0.09] blur-3xl lg:size-[560px]"
+            aria-hidden="true"
+          />
+          <div
+            className="absolute -bottom-32 -left-20 size-72 rounded-full bg-emerald-400/[0.08] blur-3xl"
+            aria-hidden="true"
+          />
+
+          <div className="absolute inset-x-4 top-4 z-20 flex items-center justify-between gap-4 sm:inset-x-6 sm:top-6 lg:inset-x-8">
+            <Logo />
+            <Link
+              href="/"
+              prefetch
+              aria-label="Ana səhifəyə qayıt"
+              className="group inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-black/15 px-3 py-2 text-[11px] font-semibold text-slate-300 backdrop-blur transition-colors hover:border-emerald-300/25 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
+              <ArrowLeft
+                className="size-3.5 transition-transform group-hover:-translate-x-1"
+                aria-hidden="true"
+              />
+              Ana səhifə
+            </Link>
+          </div>
+
+          <div className="absolute inset-x-2 bottom-2 top-16 sm:inset-x-8 sm:bottom-3 sm:top-16 lg:inset-x-8 lg:bottom-24 lg:top-20">
+            <Image
+              src="/login_reg_photo.png"
+              alt=""
+              fill
+              preload
+              sizes="(min-width: 1024px) 54vw, 100vw"
+              className="object-contain drop-shadow-[0_28px_45px_rgba(0,0,0,.3)]"
             />
-            Ana səhifəyə qayıt
-          </Link>
-        </div>
+          </div>
 
-        <div className="rounded-2xl border border-red-300/10 bg-[#1a1d20]/90 p-6 shadow-[0_30px_100px_rgba(0,0,0,.35)] backdrop-blur sm:p-8">
-          <p className="section-kicker">{copy.kicker}</p>
-          <h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white sm:text-3xl">
-            {copy.title}
-          </h1>
-          <p className="mt-2 text-sm leading-6 text-slate-500">{copy.lead}</p>
+          <div className="absolute inset-x-8 bottom-8 z-20 hidden lg:block">
+            <div className="max-w-md rounded-2xl border border-white/[0.08] bg-black/20 p-4 backdrop-blur-md">
+              <p className="font-mono text-[9px] uppercase tracking-[0.2em] text-emerald-300/75">
+                Təhlükəsiz öyrənmə mühiti
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-300">
+                Kiber biliklərini addım-addım inkişaf etdir, praktik tapşırıqlarla möhkəmləndir.
+              </p>
+            </div>
+          </div>
+        </aside>
 
-          <form onSubmit={handleSubmit} className="mt-7 space-y-4">
-            {(mode === "register" || mode === "register-teacher") && (
+        <section className="flex items-center bg-linear-to-br from-[#1d2023] to-[#17191b] p-5 sm:p-8 lg:p-10 xl:p-12">
+          <div className="mx-auto w-full max-w-md">
+            <p className="section-kicker">{copy.kicker}</p>
+            <h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-white sm:text-3xl">
+              {copy.title}
+            </h1>
+            <p className="mt-2 text-sm leading-6 text-slate-500">{copy.lead}</p>
+
+            <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+              {(mode === "register" || mode === "register-teacher") && (
+                <Field
+                  icon={<UserRound className="size-4" aria-hidden="true" />}
+                  label="Ad və soyad"
+                  name="fullName"
+                  type="text"
+                  autoComplete="name"
+                  placeholder="Aylin Nəcəfova"
+                  required
+                />
+              )}
+
+              {mode === "register-teacher" && (
+                <Field
+                  icon={<Building2 className="size-4" aria-hidden="true" />}
+                  label="Məktəb / kollec"
+                  name="institutionName"
+                  type="text"
+                  autoComplete="organization"
+                  placeholder="Bakı Texniki Kolleci"
+                  required
+                />
+              )}
+
               <Field
-                icon={<UserRound className="size-4" aria-hidden="true" />}
-                label="Ad və soyad"
-                name="fullName"
-                type="text"
-                autoComplete="name"
-                placeholder="Aylin Nəcəfova"
+                icon={<Mail className="size-4" aria-hidden="true" />}
+                label="E-poçt"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="ad@mekteb.edu.az"
                 required
               />
+
+              <Field
+                icon={<Lock className="size-4" aria-hidden="true" />}
+                label="Şifrə"
+                name="password"
+                type="password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                placeholder="••••••••"
+                minLength={8}
+                required
+              />
+
+              {shownError && (
+                <p
+                  className="flex items-start gap-2 rounded-xl border border-rose-300/20 bg-rose-300/[0.07] p-3 text-xs leading-5 text-rose-100"
+                  role="alert"
+                >
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+                  {shownError}
+                </p>
+              )}
+
+              {notice && (
+                <p
+                  className="rounded-xl border border-emerald-300/20 bg-emerald-300/[0.07] p-3 text-xs leading-5 text-emerald-100"
+                  role="status"
+                >
+                  {notice}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={pending}
+                className="primary-action group w-full disabled:opacity-60"
+                aria-live="polite"
+              >
+                <span className="relative z-10">{pending ? authPendingLabel(mode) : copy.submit}</span>
+                <span className="relative z-10">
+                  {pending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  ) : (
+                    <ArrowRight
+                      className="size-4 transition-transform group-hover:translate-x-1"
+                      aria-hidden="true"
+                    />
+                  )}
+                </span>
+                <span className="button-sheen" />
+              </button>
+            </form>
+
+            <p className="mt-6 text-center text-xs text-slate-600">
+              {copy.switchText}{" "}
+              <Link href={switchHref} className="font-semibold text-emerald-300 hover:underline">
+                {copy.switchLabel}
+              </Link>
+            </p>
+
+            {mode === "register" && (
+              <p className="mt-3 text-center text-xs text-slate-600">
+                Müəllimsən?{" "}
+                <Link href="/register/teacher" className="font-semibold text-red-300 hover:underline">
+                  Müəllim kimi qeydiyyat
+                </Link>
+              </p>
             )}
 
             {mode === "register-teacher" && (
-              <Field
-                icon={<Building2 className="size-4" aria-hidden="true" />}
-                label="Məktəb / kollec"
-                name="institutionName"
-                type="text"
-                autoComplete="organization"
-                placeholder="Bakı Texniki Kolleci"
-                required
-              />
-            )}
-
-            <Field
-              icon={<Mail className="size-4" aria-hidden="true" />}
-              label="E-poçt"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="ad@mekteb.edu.az"
-              required
-            />
-
-            <Field
-              icon={<Lock className="size-4" aria-hidden="true" />}
-              label="Şifrə"
-              name="password"
-              type="password"
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
-              placeholder="••••••••"
-              minLength={8}
-              required
-            />
-
-            {shownError && (
-              <p
-                className="flex items-start gap-2 rounded-xl border border-rose-300/20 bg-rose-300/[0.07] p-3 text-xs leading-5 text-rose-100"
-                role="alert"
-              >
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                {shownError}
+              <p className="mt-3 text-center text-xs text-slate-600">
+                Şagird hesabı üçün{" "}
+                <Link href="/register" className="font-semibold text-emerald-300 hover:underline">
+                  adi qeydiyyat
+                </Link>
               </p>
             )}
-
-            {notice && (
-              <p
-                className="rounded-xl border border-emerald-300/20 bg-emerald-300/[0.07] p-3 text-xs leading-5 text-emerald-100"
-                role="status"
-              >
-                {notice}
-              </p>
-            )}
-
-            <button type="submit" disabled={pending} className="primary-action group w-full disabled:opacity-60" aria-live="polite">
-              <span className="relative z-10">{pending ? authPendingLabel(mode) : copy.submit}</span>
-              <span className="relative z-10">
-                {pending ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                ) : (
-                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
-                )}
-              </span>
-              <span className="button-sheen" />
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-xs text-slate-600">
-            {copy.switchText}{" "}
-            <Link href={switchHref} className="font-semibold text-emerald-300 hover:underline">
-              {copy.switchLabel}
-            </Link>
-          </p>
-
-          {mode === "register" && (
-            <p className="mt-3 text-center text-xs text-slate-600">
-              Müəllimsən?{" "}
-              <Link href="/register/teacher" className="font-semibold text-red-300 hover:underline">
-                Müəllim kimi qeydiyyat
-              </Link>
-            </p>
-          )}
-
-          {mode === "register-teacher" && (
-            <p className="mt-3 text-center text-xs text-slate-600">
-              Şagird hesabı üçün{" "}
-              <Link href="/register" className="font-semibold text-emerald-300 hover:underline">
-                adi qeydiyyat
-              </Link>
-            </p>
-          )}
-        </div>
+          </div>
+        </section>
       </div>
     </main>
   );

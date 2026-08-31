@@ -59,4 +59,14 @@ for (const mode of ["login", "register", "register-teacher"]) {
       /<a(?=[^>]*href="\/")(?=[^>]*aria-label="Ana səhifəyə qayıt")[^>]*>/,
     );
   });
+
+  test(`${mode} renders the supplied authentication artwork before the form`, () => {
+    const html = renderToStaticMarkup(createElement(AuthForm, { mode }));
+    const artworkPosition = html.indexOf("login_reg_photo.png");
+    const formPosition = html.indexOf("<form");
+
+    assert.notEqual(artworkPosition, -1);
+    assert.notEqual(formPosition, -1);
+    assert.ok(artworkPosition < formPosition);
+  });
 }
