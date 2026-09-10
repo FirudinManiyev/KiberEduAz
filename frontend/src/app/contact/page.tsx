@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
-import { Building2, ChevronDown, Clock3, Mail, MapPin, MessageCircle, Radio } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Building2, Clock3, Mail, MapPin, MessageCircle } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
+import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 
 export const metadata: Metadata = {
   title: "Əlaqə",
@@ -31,21 +33,6 @@ const contactCards = [
   },
 ];
 
-const faqs = [
-  {
-    question: "Platformanı məktəbimizdə sınaqdan keçirə bilərik?",
-    answer: "Bəli. Pilot mərhələ üçün məktəb və kolleclərdən gələn əməkdaşlıq müraciətləri ayrıca qiymətləndiriləcək.",
-  },
-  {
-    question: "Təlimlər hansı yaş qrupu üçündür?",
-    answer: "Məzmun əsasən məktəbin yuxarı sinifləri və kollec tələbələri üçün sadələşdirilmiş, təhlükəsiz ssenarilərdən ibarətdir.",
-  },
-  {
-    question: "Real virtual maşın və ya hücum laboratoriyası varmı?",
-    answer: "Platformada real VM istifadə edilmir. Praktika log analizi, phishing araşdırması və interaktiv sual ssenariləri üzərində qurulub.",
-  },
-];
-
 export default function ContactPage() {
   return (
     <main className="flex-1">
@@ -56,8 +43,8 @@ export default function ContactPage() {
         <div className="mx-auto grid max-w-[1440px] gap-9 px-4 py-12 sm:px-6 lg:grid-cols-[1fr_420px] lg:items-end lg:px-10 lg:py-16">
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-red-300/15 bg-red-300/[0.065] px-3 py-1.5 text-[11px] font-semibold text-red-200">
-              <Radio className="size-3.5 animate-pulse" aria-hidden="true" />
-              Əlaqə kanalı aktivdir
+              <MessageCircle className="size-3.5" aria-hidden="true" />
+              KiberEduAz ilə əlaqə
             </div>
             <h1 className="mt-5 text-4xl font-semibold tracking-[-0.055em] text-white sm:text-5xl lg:text-[58px]">
               Gəlin kiber təhsili <span className="text-gradient">birlikdə quraq.</span>
@@ -69,13 +56,12 @@ export default function ContactPage() {
 
           <div className="rounded-2xl border border-emerald-300/12 bg-[#1a1d1f]/75 p-5 backdrop-blur-xl">
             <div className="flex items-center gap-3">
-              <span className="relative flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-                <span className="relative size-2.5 rounded-full bg-emerald-400" />
+              <span className="grid size-9 place-items-center rounded-xl border border-emerald-300/15 bg-emerald-300/[0.06] text-emerald-300">
+                <Mail className="size-4" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-xs font-semibold text-slate-200">Komanda kanalı açıqdır</p>
-                <p className="mt-0.5 text-[10px] text-slate-600">Bakı vaxtı ilə iş günləri</p>
+                <p className="text-xs font-semibold text-slate-200">Mesajını bizə göndər</p>
+                <p className="mt-0.5 text-[10px] text-slate-600">Adətən 1–2 iş günü ərzində cavab veririk</p>
               </div>
             </div>
             <div className="mt-4 flex items-center gap-2 border-t border-white/[0.06] pt-4 text-[10px] text-slate-600">
@@ -124,17 +110,21 @@ export default function ContactPage() {
                 </div>
               </div>
 
-              <div className="mt-5 divide-y divide-white/[0.055] border-y border-white/[0.055]">
-                {faqs.map((faq) => (
-                  <details key={faq.question} className="contact-faq group">
-                    <summary className="flex cursor-pointer list-none items-center gap-3 py-4 text-xs font-semibold text-slate-300 transition-colors hover:text-white">
-                      <span className="flex-1">{faq.question}</span>
-                      <ChevronDown className="size-4 shrink-0 text-slate-600 transition-transform duration-300 group-open:rotate-180 group-open:text-red-400" aria-hidden="true" />
-                    </summary>
-                    <p className="pb-4 pr-6 text-[11px] leading-5 text-slate-500">{faq.answer}</p>
-                  </details>
-                ))}
-              </div>
+              <p className="mt-5 border-t border-white/[0.055] pt-5 text-xs leading-5 text-slate-500">
+                Hesab, təlimlər, müəllim imkanları və təhlükəsiz praktika haqqında cavabları ayrıca FAQ
+                səhifəsində topladıq.
+              </p>
+              <Link
+                href="/faq"
+                prefetch
+                className="group mt-5 inline-flex w-full items-center justify-between rounded-xl border border-red-300/15 bg-red-300/[0.055] px-4 py-3 text-sm font-semibold text-red-100 transition-all hover:border-red-300/30 hover:bg-red-300/[0.09]"
+              >
+                Bütün sual və cavablara bax
+                <span className="flex items-center gap-2">
+                  <LinkLoadingIndicator />
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
+                </span>
+              </Link>
             </div>
 
             <div className="achievement-banner group relative overflow-hidden rounded-2xl border border-emerald-300/10 p-5 sm:p-6">

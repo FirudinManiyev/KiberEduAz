@@ -13,7 +13,7 @@ export function LandingCta() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full border border-red-300/15 bg-red-300/[0.055] px-3 py-1.5 text-[11px] font-semibold text-red-200">
               <Radar className="size-3.5 animate-pulse" aria-hidden="true" />
-              Platforma aktivdir · məzmun mütəmadi artır
+              Yeni məzmun mütəmadi artır
             </div>
             <h2
               id="cta-heading"

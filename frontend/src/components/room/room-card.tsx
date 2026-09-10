@@ -11,9 +11,10 @@ import type { LearningRoomSummary } from "@/lib/content/types";
 type RoomCardProps = {
   room: RoomSummary | LearningRoomSummary;
   featured?: boolean;
+  compact?: boolean;
 };
 
-export function RoomCard({ room, featured = false }: RoomCardProps) {
+export function RoomCard({ room, featured = false, compact = false }: RoomCardProps) {
   const isGreen = room.accent === "GREEN";
   const CategoryIcon = room.category === "GRC" ? FileCheck2 : Crosshair;
   const percent = room.progress.percent;
@@ -24,18 +25,19 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
 
   return (
     <article
+      data-room-density={compact ? "compact" : "standard"}
       className={`interactive-card group relative isolate flex h-full flex-col overflow-hidden rounded-2xl border bg-[#1a1d1f] transition-all duration-500 ${
         isGreen
           ? "border-emerald-300/10 hover:border-emerald-300/35 hover:shadow-[0_24px_80px_rgba(16,185,129,0.1)]"
           : "border-red-300/10 hover:border-red-300/35 hover:shadow-[0_24px_80px_rgba(239,68,68,0.1)]"
-      } ${featured ? "min-h-[330px]" : "min-h-[310px]"}`}
+      } ${featured ? "min-h-[330px]" : compact ? "min-h-[270px]" : "min-h-[310px]"}`}
     >
-      <div className="relative aspect-[16/8.4] overflow-hidden border-b border-white/[0.06] bg-[#111416]">
+      <div className={`relative overflow-hidden border-b border-white/[0.06] bg-[#111416] ${compact ? "aspect-[16/7.2]" : "aspect-[16/8.4]"}`}>
         <Image
           src={image}
           alt={imageAlt}
           fill
-          sizes="(min-width: 768px) 50vw, 100vw"
+          sizes={compact ? "(min-width: 1024px) 33vw, (min-width: 768px) 50vw, 100vw" : "(min-width: 768px) 50vw, 100vw"}
           className="object-cover transition duration-700 group-hover:scale-[1.06] group-hover:saturate-125"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#1a1d1f] via-[#1a1d1f]/10 to-black/10" />
@@ -48,7 +50,7 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
       <div className="card-scanline" />
       <div className="cyber-grid absolute inset-0 -z-10 opacity-[0.1] transition-opacity duration-500 group-hover:opacity-[0.2]" />
 
-      <div className="relative flex items-start justify-between p-5 pb-4 sm:px-6 sm:pt-5 sm:pb-4">
+      <div className={`relative flex items-start justify-between ${compact ? "p-4 pb-3" : "p-5 pb-4 sm:px-6 sm:pt-5 sm:pb-4"}`}>
         <div className={`room-icon-shell ${isGreen ? "room-icon-shell--green" : "room-icon-shell--red"}`}>
           <CategoryIcon className="size-5 transition-transform duration-500 group-hover:rotate-6 group-hover:scale-110" aria-hidden="true" />
           <span className="room-icon-shell__ring" />
@@ -61,14 +63,14 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
         </div>
       </div>
 
-      <div className="relative flex flex-1 flex-col px-5 pb-5 sm:px-6 sm:pb-6">
+      <div className={`relative flex flex-1 flex-col ${compact ? "px-4 pb-4" : "px-5 pb-5 sm:px-6 sm:pb-6"}`}>
         <p className={`mb-2 text-[11px] font-semibold uppercase tracking-[0.16em] ${isGreen ? "text-emerald-400" : "text-red-400"}`}>
           {room.path}
         </p>
-        <h3 className="text-xl font-semibold tracking-[-0.025em] text-white transition-transform duration-500 group-hover:translate-x-1">{room.title}</h3>
-        <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-400 transition-colors group-hover:text-slate-300">{room.description}</p>
+        <h3 className={`${compact ? "text-lg" : "text-xl"} font-semibold tracking-[-0.025em] text-white transition-transform duration-500 group-hover:translate-x-1`}>{room.title}</h3>
+        <p className={`mt-2 text-slate-400 transition-colors group-hover:text-slate-300 ${compact ? "line-clamp-2 text-xs leading-5" : "line-clamp-3 text-sm leading-6"}`}>{room.description}</p>
 
-        <div className="mt-5 flex flex-wrap gap-x-4 gap-y-2 border-t border-white/[0.06] pt-4 text-xs text-slate-500">
+        <div className={`${compact ? "mt-4 gap-x-3 pt-3 text-[11px]" : "mt-5 gap-x-4 pt-4 text-xs"} flex flex-wrap gap-y-2 border-t border-white/[0.06] text-slate-500`}>
           <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Shield className="size-3.5" aria-hidden="true" />{DIFFICULTY_LABELS[room.difficulty]}</span>
           <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><Clock3 className="size-3.5" aria-hidden="true" />{room.durationLabel}</span>
           <span className="inline-flex items-center gap-1.5 transition-colors hover:text-white"><ListChecks className="size-3.5" aria-hidden="true" />{room.taskCount} task</span>
@@ -78,7 +80,7 @@ export function RoomCard({ room, featured = false }: RoomCardProps) {
         <Link
           href={`/rooms/${room.slug}`}
           prefetch
-          className={`relative mt-5 inline-flex items-center justify-between overflow-hidden rounded-xl border px-4 py-3 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 ${
+          className={`relative inline-flex items-center justify-between overflow-hidden rounded-xl border px-4 text-sm font-semibold transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 ${compact ? "mt-4 py-2.5" : "mt-5 py-3"} ${
             isGreen
               ? "border-emerald-300/15 bg-emerald-300/[0.07] text-emerald-200 hover:border-emerald-300/40 hover:bg-emerald-300/[0.13] focus-visible:ring-emerald-400"
               : "border-red-300/15 bg-red-300/[0.07] text-red-200 hover:border-red-300/40 hover:bg-red-300/[0.13] focus-visible:ring-red-400"

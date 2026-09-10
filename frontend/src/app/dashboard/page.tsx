@@ -125,7 +125,6 @@ export default async function DashboardPage() {
         <div className="threat-ticker__track">
           {[0, 1].map((copy) => (
             <div key={copy} className="flex shrink-0 items-center gap-10 pr-10">
-              <span><i className="bg-emerald-400" /> PLATFORM STATUS: ONLINE</span>
               <span><i className="bg-red-400" /> AKTİV SERİYA: {summary.currentStreak} GÜN</span>
               <span><i className="bg-emerald-400" /> {summary.totalPublishedRooms} ROOM DƏRC OLUNUB</span>
               <span><i className="bg-red-400" /> RÜTBƏN: {summary.rank.name.toLocaleUpperCase("az")}</span>
@@ -163,7 +162,7 @@ export default async function DashboardPage() {
 
             <div className="mt-9 grid max-w-xl grid-cols-3 gap-2 sm:gap-3">
               {[
-                { value: String(rooms.length).padStart(2, "0"), label: "Canlı Room", icon: BookOpenCheck },
+                { value: String(rooms.length).padStart(2, "0"), label: "Mövcud Room", icon: BookOpenCheck },
                 { value: String(totalTasks), label: "Praktiki task", icon: CheckCircle2 },
                 { value: availablePoints.toLocaleString("az-AZ"), label: "Mümkün XP", icon: Award },
               ].map((item) => {
@@ -190,7 +189,7 @@ export default async function DashboardPage() {
         <section aria-labelledby="overview-heading">
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <p className="section-kicker">Canlı göstəricilər</p>
+              <p className="section-kicker">İrəliləyiş göstəriciləri</p>
               <h2 id="overview-heading" className="section-title">Komanda mərkəzin</h2>
             </div>
             <div className="flex items-center gap-2 text-[11px] text-slate-600"><Activity className="size-3.5 text-emerald-400" /><span>İndi yeniləndi</span></div>

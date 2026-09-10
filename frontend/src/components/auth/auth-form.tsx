@@ -188,7 +188,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       <div className="relative grid w-full max-w-6xl overflow-hidden rounded-[1.75rem] border border-white/[0.08] bg-[#171a1c]/95 shadow-[0_35px_120px_rgba(0,0,0,.42)] backdrop-blur-xl lg:grid-cols-[1.08fr_.92fr] lg:rounded-[2rem]">
         <aside
           aria-label="Kibertəhlükəsizlik öyrənmə vizualı"
-          className="relative min-h-[290px] overflow-hidden border-b border-white/[0.07] bg-[#111719] lg:min-h-[720px] lg:border-b-0 lg:border-r"
+          className="relative min-h-[245px] overflow-hidden border-b border-white/[0.07] bg-[#111719] lg:min-h-[620px] lg:border-b-0 lg:border-r"
         >
           <div className="cyber-grid absolute inset-0 opacity-[0.22]" aria-hidden="true" />
           <div
@@ -216,7 +216,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
             </Link>
           </div>
 
-          <div className="absolute inset-x-2 bottom-2 top-16 sm:inset-x-8 sm:bottom-3 sm:top-16 lg:inset-x-8 lg:bottom-24 lg:top-20">
+          <div
+            data-auth-artwork-size="compact"
+            className="absolute inset-x-9 bottom-3 top-16 sm:inset-x-16 sm:bottom-5 lg:inset-x-16 lg:bottom-24 lg:top-24 xl:inset-x-20"
+          >
             <Image
               src="/login_reg_photo.png"
               alt=""

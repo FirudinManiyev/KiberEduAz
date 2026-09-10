@@ -92,9 +92,9 @@ export function RoomBrowser({ rooms }: RoomBrowserProps) {
       </div>
 
       {visibleRooms.length > 0 ? (
-        <div className="grid gap-5 md:grid-cols-2">
+        <div data-room-grid="three-column" className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {list.visibleItems.map((room) => (
-            <RoomCard key={room.slug} room={room} />
+            <RoomCard key={room.slug} room={room} compact />
           ))}
         </div>
       ) : (

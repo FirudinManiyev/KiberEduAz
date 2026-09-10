@@ -28,7 +28,7 @@ export function SiteLoader() {
         <BrandMark size="lg" />
         <div className="site-loader__terminal mt-5">
           <span className="text-emerald-400">$</span>
-          <span>sistem hazırlanır</span>
+          <span>səhifə hazırlanır</span>
           <span className="site-loader__cursor" />
         </div>
         <div className="site-loader__bar mt-6"><span /></div>

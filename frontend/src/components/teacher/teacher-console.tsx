@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Activity,
   BookPlus,
@@ -99,8 +100,10 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       setClassDetail(detail);
       return true;
     } catch (cause) {
+      const message = toUserErrorMessage(cause, "Sinif məlumatları yüklənə bilmədi");
       setClassDetail(null);
-      setError(toUserErrorMessage(cause, "Sinif məlumatları yüklənə bilmədi"));
+      setError(message);
+      toast.error(message);
       return false;
     } finally {
       setLoadingClassId(null);
@@ -131,8 +134,11 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       event.currentTarget.reset();
       await refreshPaths();
       setMessage("Modul yaradıldı.");
+      toast.success("Modul yaradıldı");
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Modul yaradıla bilmədi"));
+      const message = toUserErrorMessage(cause, "Modul yaradıla bilmədi");
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -169,8 +175,13 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       event.currentTarget.reset();
       await refreshRooms();
       setMessage("Room yaradıldı (DRAFT). Admin təsdiqindən sonra şagirdlərə açılacaq.");
+      toast.success("Room yaradıldı", {
+        description: "Admin təsdiqindən sonra öyrənənlərə açılacaq.",
+      });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Room yaradıla bilmədi"));
+      const message = toUserErrorMessage(cause, "Room yaradıla bilmədi");
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -200,8 +211,13 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
           ? "Sinif yaradıldı."
           : "Sinif yaradıldı, amma məlumatları indi göstərmək mümkün olmadı.",
       );
+      toast.success("Sinif yaradıldı", {
+        description: classLoaded ? undefined : "Məlumatları indi göstərmək mümkün olmadı.",
+      });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Sinif yaradıla bilmədi"));
+      const message = toUserErrorMessage(cause, "Sinif yaradıla bilmədi");
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -226,8 +242,11 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       setClassDetail(detail);
       await refreshClasses();
       setMessage("Şagird sinfə əlavə olundu.");
+      toast.success("Şagird sinfə əlavə olundu");
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Şagird sinfə əlavə edilə bilmədi"));
+      const message = toUserErrorMessage(cause, "Şagird sinfə əlavə edilə bilmədi");
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -237,6 +256,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
     if (!activeClassId) return;
     setBusy(true);
     setError(null);
+    setMessage(null);
 
     try {
       const detail = await apiRequest<ClassDetail>(
@@ -245,8 +265,12 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       );
       setClassDetail(detail);
       await refreshClasses();
+      setMessage("Şagird sinifdən silindi.");
+      toast.success("Şagird sinifdən silindi");
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Şagird sinifdən silinə bilmədi"));
+      const message = toUserErrorMessage(cause, "Şagird sinifdən silinə bilmədi");
+      setError(message);
+      toast.error(message);
     } finally {
       setBusy(false);
     }
@@ -284,7 +308,7 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
             <div className="relative flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
               <div>
                 <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300">
-                  <Activity className="size-3.5" aria-hidden="true" /> Canlı tədris göstəriciləri
+                  <Activity className="size-3.5" aria-hidden="true" /> Tədris göstəriciləri
                 </p>
                 <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-white">Sinif əməliyyatları</h2>
               </div>

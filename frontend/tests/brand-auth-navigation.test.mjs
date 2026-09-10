@@ -68,5 +68,6 @@ for (const mode of ["login", "register", "register-teacher"]) {
     assert.notEqual(artworkPosition, -1);
     assert.notEqual(formPosition, -1);
     assert.ok(artworkPosition < formPosition);
+    assert.match(html, /data-auth-artwork-size="compact"/);
   });
 }

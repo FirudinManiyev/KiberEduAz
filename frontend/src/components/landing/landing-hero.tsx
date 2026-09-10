@@ -11,8 +11,8 @@ import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicat
 import { CyberHeroShell } from "@/components/hero/cyber-hero-shell";
 
 const MISSION_STEPS = [
-  { label: "Mövzunu öyrən", detail: "Qısa və fokuslanmış dərs", status: "Hazır" },
-  { label: "Ssenarini analiz et", detail: "Real hadisəyə əsaslanan tapşırıq", status: "Canlı" },
+  { label: "Mövzunu öyrən", detail: "Qısa və fokuslanmış dərs", status: "Başla" },
+  { label: "Ssenarini analiz et", detail: "Real hadisəyə əsaslanan tapşırıq", status: "Praktika" },
   { label: "Cavabını yoxla", detail: "Ani nəticə və izah", status: "+XP" },
 ];
 
@@ -68,7 +68,7 @@ export function LandingHero() {
             <div className="relative flex items-center justify-between gap-4 border-b border-white/[0.08] pb-5">
               <div>
                 <p className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-300">
-                  <Activity className="size-3.5" aria-hidden="true" /> Canlı tədris axını
+                  <Activity className="size-3.5" aria-hidden="true" /> Praktik tədris axını
                 </p>
                 <h2 className="mt-2 text-xl font-semibold tracking-[-0.035em] text-white sm:text-2xl">
                   İlk kiber missiyan
@@ -111,8 +111,8 @@ export function LandingHero() {
 
             <div className="relative mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-white/[0.08] pt-5 text-[11px] text-slate-500">
               <span className="inline-flex items-center gap-2">
-                <i className="size-1.5 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.9)]" />
-                Sistem hazırdır
+                <CheckCircle2 className="size-3.5 text-emerald-400" aria-hidden="true" />
+                Addım-addım öyrənmə
               </span>
               <span className="font-mono text-slate-400">ÖYRƏN · ANALİZ ET · QAZAN</span>
             </div>

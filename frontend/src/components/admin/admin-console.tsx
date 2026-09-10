@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import {
   Check,
   Loader2,
@@ -48,6 +49,7 @@ export function AdminConsole({
   async function approveTeacher(id: string) {
     setBusyId(id);
     setError(null);
+    toast.loading("Müəllim müraciəti təsdiqlənir…", { id: `teacher-${id}` });
 
     try {
       await apiRequest(`/admin/teachers/${id}/approve`, { method: "POST" });
@@ -58,8 +60,11 @@ export function AdminConsole({
         ),
       );
       await refreshStats();
+      toast.success("Müəllim müraciəti təsdiqləndi", { id: `teacher-${id}` });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Müəllim təsdiqlənə bilmədi"));
+      const message = toUserErrorMessage(cause, "Müəllim təsdiqlənə bilmədi");
+      setError(message);
+      toast.error(message, { id: `teacher-${id}` });
     } finally {
       setBusyId(null);
     }
@@ -68,6 +73,7 @@ export function AdminConsole({
   async function rejectTeacher(id: string) {
     setBusyId(id);
     setError(null);
+    toast.loading("Müəllim müraciəti rədd edilir…", { id: `teacher-${id}` });
 
     try {
       await apiRequest(`/admin/teachers/${id}/reject`, { method: "POST" });
@@ -78,8 +84,11 @@ export function AdminConsole({
         ),
       );
       await refreshStats();
+      toast.success("Müəllim müraciəti rədd edildi", { id: `teacher-${id}` });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Müraciət rədd edilə bilmədi"));
+      const message = toUserErrorMessage(cause, "Müraciət rədd edilə bilmədi");
+      setError(message);
+      toast.error(message, { id: `teacher-${id}` });
     } finally {
       setBusyId(null);
     }
@@ -88,13 +97,17 @@ export function AdminConsole({
   async function approveRoom(id: string) {
     setBusyId(id);
     setError(null);
+    toast.loading("Room dərc edilir…", { id: `room-${id}` });
 
     try {
       await apiRequest(`/admin/rooms/${id}/approve`, { method: "POST" });
       setPendingRooms((current) => current.filter((item) => item.id !== id));
       await refreshStats();
+      toast.success("Room şagirdlər üçün açıldı", { id: `room-${id}` });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Room təsdiqlənə bilmədi"));
+      const message = toUserErrorMessage(cause, "Room təsdiqlənə bilmədi");
+      setError(message);
+      toast.error(message, { id: `room-${id}` });
     } finally {
       setBusyId(null);
     }
@@ -103,13 +116,17 @@ export function AdminConsole({
   async function rejectRoom(id: string) {
     setBusyId(id);
     setError(null);
+    toast.loading("Room arxivlənir…", { id: `room-${id}` });
 
     try {
       await apiRequest(`/admin/rooms/${id}/reject`, { method: "POST" });
       setPendingRooms((current) => current.filter((item) => item.id !== id));
       await refreshStats();
+      toast.success("Room arxivləndi", { id: `room-${id}` });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "Room arxivlənə bilmədi"));
+      const message = toUserErrorMessage(cause, "Room arxivlənə bilmədi");
+      setError(message);
+      toast.error(message, { id: `room-${id}` });
     } finally {
       setBusyId(null);
     }
@@ -118,6 +135,7 @@ export function AdminConsole({
   async function changeRole(id: string, role: UserRole) {
     setBusyId(id);
     setError(null);
+    toast.loading("İstifadəçi rolu yenilənir…", { id: `role-${id}` });
 
     try {
       await apiRequest(`/profiles/${id}/role`, {
@@ -136,8 +154,11 @@ export function AdminConsole({
         ),
       );
       await refreshStats();
+      toast.success("İstifadəçi rolu yeniləndi", { id: `role-${id}` });
     } catch (cause) {
-      setError(toUserErrorMessage(cause, "İstifadəçi rolu dəyişdirilə bilmədi"));
+      const message = toUserErrorMessage(cause, "İstifadəçi rolu dəyişdirilə bilmədi");
+      setError(message);
+      toast.error(message, { id: `role-${id}` });
     } finally {
       setBusyId(null);
     }

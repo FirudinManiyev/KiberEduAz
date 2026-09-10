@@ -2,6 +2,7 @@
 
 import { Check, Send, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
+import { toast } from "sonner";
 
 export function ContactForm() {
   const [submitted, setSubmitted] = useState(false);
@@ -10,6 +11,9 @@ export function ContactForm() {
     event.preventDefault();
     event.currentTarget.reset();
     setSubmitted(true);
+    toast.success("Mesaj forması hazırlandı", {
+      description: "Sorğu önbaxışı yaradıldı.",
+    });
     window.setTimeout(() => setSubmitted(false), 3500);
   }
 

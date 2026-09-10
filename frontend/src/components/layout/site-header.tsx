@@ -96,14 +96,6 @@ export function SiteHeader({ user, unreadCount }: SiteHeaderProps) {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">
-          <div className="hidden items-center gap-2 rounded-full border border-emerald-300/12 bg-emerald-300/[0.045] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300 xl:flex">
-            <span className="relative flex size-1.5">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
-              <span className="relative inline-flex size-1.5 rounded-full bg-emerald-400" />
-            </span>
-            Sistem aktivdir
-          </div>
-
           {user ? (
             <>
               {!user.pending && (
