@@ -1,8 +1,8 @@
 "use client";
 
 import { FormEvent, KeyboardEvent, useEffect, useId, useRef, useState } from "react";
-import { Bot, ChevronDown, MessageCircle, Send, ShieldCheck, Sparkles, X } from "lucide-react";
-import { createKiberBotExchange } from "@/lib/kiberbot/exchange";
+import { Bot, ChevronDown, HelpCircle, MessageCircle, Send, X } from "lucide-react";
+import { createKiberBotExchange, KIBERBOT_SUGGESTIONS } from "@/lib/kiberbot/exchange";
 
 type ChatMessage = {
   id: string;
@@ -13,11 +13,73 @@ type ChatMessage = {
 const INITIAL_MESSAGE: ChatMessage = {
   id: "kiberbot-welcome",
   role: "assistant",
-  text: "Salam! Mən KiberBotam. KiberEduAz və kibertəhlükəsizlik üzrə sualını yaza bilərsən.",
+  text: "Salam! Mən KiberBotam. KiberEduAz-dan istifadə ilə bağlı hazır suallardan birini seçə bilərsən.",
 };
+
+type KiberBotSuggestionMenuProps = {
+  isOpen: boolean;
+  disabled: boolean;
+  onToggle: () => void;
+  onSelect: (question: string) => void;
+};
+
+export function KiberBotSuggestionMenu({
+  isOpen,
+  disabled,
+  onToggle,
+  onSelect,
+}: KiberBotSuggestionMenuProps) {
+  const menuId = useId();
+
+  return (
+    <div className="relative mb-2">
+      {isOpen && (
+        <div
+          id={menuId}
+          className="absolute inset-x-0 bottom-[calc(100%+.5rem)] z-20 max-h-60 space-y-1.5 overflow-y-auto rounded-2xl border border-emerald-300/15 bg-[#161b1e]/98 p-2.5 shadow-[0_-18px_55px_rgba(0,0,0,.48),0_0_30px_rgba(52,211,153,.06)] backdrop-blur-2xl"
+          aria-label="Hazır suallar"
+        >
+          {KIBERBOT_SUGGESTIONS.map((suggestion) => (
+            <button
+              key={suggestion.id}
+              type="button"
+              disabled={disabled}
+              onClick={() => onSelect(suggestion.question)}
+              className="group flex w-full items-start gap-2.5 rounded-xl border border-transparent px-3 py-2.5 text-left text-[11px] leading-4 text-slate-300 transition hover:border-emerald-300/15 hover:bg-emerald-300/[0.06] hover:text-white disabled:cursor-wait disabled:opacity-45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
+              <span className="mt-0.5 grid size-5 shrink-0 place-items-center rounded-md bg-emerald-300/[0.08] text-[9px] font-bold text-emerald-300">
+                ?
+              </span>
+              <span>{suggestion.question}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label="Hazır suallar menyusu"
+        aria-expanded={isOpen}
+        aria-controls={menuId}
+        className="flex w-full items-center justify-between gap-3 rounded-xl border border-white/[0.07] bg-white/[0.025] px-3 py-2 text-[10px] font-semibold text-slate-400 transition hover:border-emerald-300/20 hover:bg-emerald-300/[0.04] hover:text-emerald-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+      >
+        <span className="flex items-center gap-2">
+          <HelpCircle className="size-3.5 text-emerald-400" aria-hidden="true" />
+          Hazır suallar
+        </span>
+        <ChevronDown
+          className={`size-3.5 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
+      </button>
+    </div>
+  );
+}
 
 export function KiberBot() {
   const [isOpen, setIsOpen] = useState(false);
+  const [isSuggestionMenuOpen, setIsSuggestionMenuOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [isTyping, setIsTyping] = useState(false);
@@ -59,13 +121,13 @@ export function KiberBot() {
     [],
   );
 
-  function submitMessage(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault();
+  function sendMessage(input: string) {
     if (isTyping) return;
 
-    const exchange = createKiberBotExchange(draft);
+    const exchange = createKiberBotExchange(input);
     if (!exchange) return;
 
+    setIsSuggestionMenuOpen(false);
     const sequence = messageSequenceRef.current++;
     setMessages((current) => [
       ...current,
@@ -82,6 +144,11 @@ export function KiberBot() {
       setIsTyping(false);
       replyTimerRef.current = null;
     }, 650);
+  }
+
+  function submitMessage(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    sendMessage(draft);
   }
 
   function handleInputKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
@@ -114,9 +181,6 @@ export function KiberBot() {
                   <h2 id={`${panelId}-title`} className="text-sm font-bold text-white">
                     KiberBot
                   </h2>
-                  <span className="rounded-full border border-amber-300/15 bg-amber-300/[0.06] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em] text-amber-200">
-                    Tezliklə aktiv
-                  </span>
                 </div>
                 <p id={descriptionId} className="mt-0.5 text-[10px] text-slate-500">
                   KiberEduAz rəqəmsal köməkçisi
@@ -140,10 +204,6 @@ export function KiberBot() {
             aria-live="polite"
             aria-relevant="additions"
           >
-            <div className="flex items-center justify-center gap-2 text-[9px] uppercase tracking-[0.13em] text-slate-600">
-              <ShieldCheck className="size-3" aria-hidden="true" />
-              Lokal önizləmə · məlumat göndərilmir
-            </div>
             {messages.map((message) => (
               <div
                 key={message.id}
@@ -171,7 +231,13 @@ export function KiberBot() {
             )}
           </div>
 
-          <form onSubmit={submitMessage} className="border-t border-white/[0.07] bg-black/15 p-3">
+          <form onSubmit={submitMessage} className="relative border-t border-white/[0.07] bg-black/15 p-3">
+            <KiberBotSuggestionMenu
+              isOpen={isSuggestionMenuOpen}
+              disabled={isTyping}
+              onToggle={() => setIsSuggestionMenuOpen((current) => !current)}
+              onSelect={sendMessage}
+            />
             <div className="flex items-end gap-2 rounded-2xl border border-white/[0.08] bg-black/20 p-1.5 transition focus-within:border-emerald-300/25 focus-within:ring-2 focus-within:ring-emerald-300/[0.06]">
               <textarea
                 ref={inputRef}
@@ -193,10 +259,6 @@ export function KiberBot() {
                 <Send className="size-4" aria-hidden="true" />
               </button>
             </div>
-            <p className="mt-2 flex items-center justify-center gap-1.5 text-[9px] text-slate-600">
-              <Sparkles className="size-3" aria-hidden="true" />
-              Cavablar hazırda nümunə rejimindədir
-            </p>
           </form>
         </section>
       )}

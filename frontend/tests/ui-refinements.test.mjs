@@ -11,7 +11,19 @@ mock.module("next/navigation", {
   },
 });
 
+let marketingProfile = null;
+
+mock.module("../src/lib/api/server.ts", {
+  namedExports: {
+    async apiFetchOrNull() {
+      return marketingProfile;
+    },
+  },
+});
+
+const { default: AboutPage } = await import("../src/app/about/page.tsx");
 const { default: ContactPage } = await import("../src/app/contact/page.tsx");
+const { default: LandingPage } = await import("../src/app/page.tsx");
 const { LandingCta } = await import("../src/components/landing/landing-cta.tsx");
 const { LandingHero } = await import("../src/components/landing/landing-hero.tsx");
 const { SiteHeader } = await import("../src/components/layout/site-header.tsx");
@@ -45,4 +57,25 @@ test("public navigation and landing surfaces omit decorative live-system labels"
     html,
     /Sistem aktivdir|Platforma aktivdir|Əlaqə kanalı aktivdir|Komanda kanalı açıqdır|Canlı tədris axını|Sistem hazırdır/,
   );
+});
+
+test("signed-out visitors see separate student and teacher registration choices on About", async () => {
+  marketingProfile = null;
+  const html = renderToStaticMarkup(await AboutPage());
+
+  assert.match(html, /<a(?=[^>]*href="\/register")[^>]*>[^]*Şagird kimi qeydiyyat/);
+  assert.match(html, /<a(?=[^>]*href="\/register\/teacher")[^>]*>[^]*Müəllim kimi qeydiyyat/);
+  assert.doesNotMatch(html, /Pulsuz hesab yarat/);
+});
+
+test("signed-in visitors never see marketing registration calls to action", async () => {
+  marketingProfile = { id: "signed-in-user" };
+  const html = [
+    renderToStaticMarkup(await LandingPage()),
+    renderToStaticMarkup(await AboutPage()),
+  ].join(" ");
+  marketingProfile = null;
+
+  assert.doesNotMatch(html, /href="\/register(?:\/teacher)?"|Pulsuz hesab yarat|qeydiyyatdan keç/i);
+  assert.match(html, /href="\/rooms"/);
 });

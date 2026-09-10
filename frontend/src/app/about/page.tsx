@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 import { CyberHeroShell } from "@/components/hero/cyber-hero-shell";
+import { apiFetchOrNull } from "@/lib/api/server";
+import type { MyProfile } from "@/lib/api/types";
 
 export const metadata: Metadata = {
   title: "Haqqımızda",
@@ -49,7 +51,10 @@ const ROLE_FLOW = [
   { icon: Users, label: "Şagird", text: "Missiyaları tamamlayır, izah alır və inkişafını izləyir." },
 ];
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const profile = await apiFetchOrNull<MyProfile>("/profiles/me");
+  const signedIn = Boolean(profile);
+
   return (
     <main className="flex-1 overflow-hidden">
       <CyberHeroShell ariaLabelledby="about-heading" className="about-hero">
@@ -184,14 +189,30 @@ export default function AboutPage() {
             <div className="cyber-grid absolute inset-0 opacity-[0.08]" />
             <div className="relative max-w-2xl">
               <p className="section-kicker">Növbəti addım</p>
-              <h2 id="about-cta-heading" className="section-title">Kiber öyrənmə yoluna başlamağa hazırsan?</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-500">Hesab yarat, Room seç və ilk təhlükəsizlik missiyanı tamamla.</p>
+              <h2 id="about-cta-heading" className="section-title">
+                {signedIn ? "Kiber öyrənmə yoluna davam et" : "Kiber öyrənmə yoluna başlamağa hazırsan?"}
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-500">
+                {signedIn
+                  ? "Növbəti Room-u seç və təhlükəsizlik bacarıqlarını addım-addım inkişaf etdir."
+                  : "Özün öyrənmək və ya başqalarına təlim vermək üçün uyğun qeydiyyat yolunu seç."}
+              </p>
             </div>
-            <Link href="/register" prefetch className="primary-action group relative mt-6 shrink-0 lg:mt-0">
-              Pulsuz hesab yarat
-              <span className="flex items-center gap-2"><LinkLoadingIndicator /><ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
-              <span className="button-sheen" />
-            </Link>
+            <div className="relative mt-6 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0">
+              <Link href={signedIn ? "/rooms" : "/register"} prefetch className="primary-action group">
+                {signedIn ? "Room-lara keç" : "Şagird kimi qeydiyyat"}
+                <span className="flex items-center gap-2"><LinkLoadingIndicator /><ArrowRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
+                <span className="button-sheen" />
+              </Link>
+              <Link
+                href={signedIn ? "/roadmap" : "/register/teacher"}
+                prefetch
+                className="secondary-action group"
+              >
+                {signedIn ? "Təlim xəritəsini aç" : "Müəllim kimi qeydiyyat"}
+                <span className="flex items-center gap-2"><LinkLoadingIndicator /><ChevronRight className="size-4 transition-transform group-hover:translate-x-1" /></span>
+              </Link>
+            </div>
           </div>
         </section>
       </div>

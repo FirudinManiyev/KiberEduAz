@@ -74,7 +74,7 @@ export function CommandConsole({
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-red-400">Günün mikro-missiyası</p>
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.035em] text-white sm:text-2xl">Təhdidi 30 saniyəyə tap</h2>
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.035em] text-white sm:text-2xl">Təhdidi tap</h2>
             <p className="mt-1 text-xs text-slate-500">Cavabını seç və ani analiz al.</p>
           </div>
           <span className="grid size-11 shrink-0 place-items-center rounded-xl border border-red-300/15 bg-red-300/[0.07] text-red-300">

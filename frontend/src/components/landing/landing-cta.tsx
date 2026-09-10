@@ -2,7 +2,11 @@ import Link from "next/link";
 import { ArrowRight, Building2, ChevronRight, Radar } from "lucide-react";
 import { LinkLoadingIndicator } from "@/components/feedback/link-loading-indicator";
 
-export function LandingCta() {
+type LandingCtaProps = {
+  signedIn?: boolean;
+};
+
+export function LandingCta({ signedIn = false }: LandingCtaProps) {
   return (
     <section className="pt-14 lg:pt-20" aria-labelledby="cta-heading">
       <div className="relative overflow-hidden rounded-2xl border border-red-300/12 p-6 sm:p-9 lg:p-12">
@@ -19,39 +23,48 @@ export function LandingCta() {
               id="cta-heading"
               className="mt-5 text-balance text-2xl font-semibold tracking-[-0.05em] text-white sm:text-4xl"
             >
-              İlk Room-u <span className="text-gradient">bu gün aç.</span>
+              {signedIn ? (
+                <>Növbəti <span className="text-gradient">missiyanı seç.</span></>
+              ) : (
+                <>İlk Room-u <span className="text-gradient">bu gün aç.</span></>
+              )}
             </h2>
             <p className="mt-4 max-w-xl text-sm leading-6 text-slate-400 sm:text-base sm:leading-7">
-              Şagird kimi qeydiyyatdan keçib mövcud təlimləri sınaya bilərsən. Məktəb və ya kollec
-              adından yazırsansa, pilot şərtlərini komanda ilə birgə müzakirə edək.
+              {signedIn
+                ? "Room-lara qayıt, qaldığın yerdən davam et və inkişafını təlim xəritəsində izlə."
+                : "Şagird kimi qeydiyyatdan keçib mövcud təlimləri sınaya bilərsən. Məktəb və ya kollec adından yazırsansa, pilot şərtlərini komanda ilə birgə müzakirə edək."}
             </p>
           </div>
 
           <div className="flex flex-col gap-3">
-            <Link href="/register" prefetch className="primary-action group w-full">
-              <span className="relative z-10">Şagird kimi qeydiyyatdan keç</span>
+            <Link href={signedIn ? "/rooms" : "/register"} prefetch className="primary-action group w-full">
+              <span className="relative z-10">
+                {signedIn ? "Room-lara keç" : "Şagird kimi qeydiyyatdan keç"}
+              </span>
               <span className="relative z-10 flex items-center gap-2">
                 <LinkLoadingIndicator />
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </span>
               <span className="button-sheen" />
             </Link>
-            <Link href="/contact" prefetch className="secondary-action group w-full">
+            <Link href={signedIn ? "/roadmap" : "/contact"} prefetch className="secondary-action group w-full">
               <span className="flex items-center gap-2">
                 <Building2 className="size-4" aria-hidden="true" />
-                Məktəblər üçün əlaqə
+                {signedIn ? "Təlim xəritəsini aç" : "Məktəblər üçün əlaqə"}
               </span>
               <span className="flex items-center gap-2">
                 <LinkLoadingIndicator />
                 <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </span>
             </Link>
-            <p className="text-center text-[11px] text-slate-600">
-              Artıq hesabın var?{" "}
-              <Link href="/login" prefetch className="font-semibold text-emerald-300 hover:underline">
-                Daxil ol
-              </Link>
-            </p>
+            {!signedIn && (
+              <p className="text-center text-[11px] text-slate-600">
+                Artıq hesabın var?{" "}
+                <Link href="/login" prefetch className="font-semibold text-emerald-300 hover:underline">
+                  Daxil ol
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       </div>

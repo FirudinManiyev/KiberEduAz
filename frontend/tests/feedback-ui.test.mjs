@@ -5,7 +5,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { ErrorPage } from "../src/app/error.tsx";
 import { GlobalError } from "../src/app/global-error.tsx";
 import { RouteLoading } from "../src/components/feedback/route-loading.tsx";
-import { KiberBot } from "../src/components/kiberbot/kiberbot.tsx";
+import * as KiberBotModule from "../src/components/kiberbot/kiberbot.tsx";
+
+const { KiberBot } = KiberBotModule;
 
 test("route loading renders a meaningful accessible status", () => {
   const html = renderToStaticMarkup(createElement(RouteLoading));
@@ -34,4 +36,26 @@ test("KiberBot exposes a labelled fixed chat launcher and friendly introduction"
   assert.match(html, /aria-label="KiberBot söhbətini aç"/);
   assert.match(html, /KiberBot/);
   assert.match(html, /kibertəhlükəsizlik suallarını yaza bilərsən/i);
+});
+
+test("KiberBot ready questions render as a reusable collapsible menu above the input", () => {
+  const SuggestionMenu = KiberBotModule.KiberBotSuggestionMenu;
+
+  assert.equal(typeof SuggestionMenu, "function");
+  if (typeof SuggestionMenu !== "function") return;
+
+  const html = renderToStaticMarkup(
+    createElement(SuggestionMenu, {
+      isOpen: true,
+      disabled: false,
+      onToggle() {},
+      onSelect() {},
+    }),
+  );
+
+  assert.match(html, /aria-label="Hazır suallar menyusu"/);
+  assert.match(html, /aria-expanded="true"/);
+  assert.match(html, /Room-a necə başlaya bilərəm/);
+  assert.match(html, /İrəliləyişimi harada görə bilərəm/);
+  assert.doesNotMatch(html, /Lokal önizləmə|məlumat göndərilmir/);
 });

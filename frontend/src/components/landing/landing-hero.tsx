@@ -16,7 +16,11 @@ const MISSION_STEPS = [
   { label: "Cavabını yoxla", detail: "Ani nəticə və izah", status: "+XP" },
 ];
 
-export function LandingHero() {
+type LandingHeroProps = {
+  signedIn?: boolean;
+};
+
+export function LandingHero({ signedIn = false }: LandingHeroProps) {
   return (
     <CyberHeroShell ariaLabelledby="hero-heading">
       <div className="mx-auto grid min-h-[inherit] max-w-[1440px] gap-12 px-4 py-12 sm:px-6 sm:py-16 lg:grid-cols-[1.04fr_.96fr] lg:items-center lg:px-10 lg:py-20">
@@ -42,16 +46,22 @@ export function LandingHero() {
           </p>
 
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-            <Link href="/register" prefetch className="primary-action group">
-              <span className="relative z-10">Pulsuz hesab yarat</span>
+            <Link href={signedIn ? "/rooms" : "/register"} prefetch className="primary-action group">
+              <span className="relative z-10">
+                {signedIn ? "Missiyalara davam et" : "Pulsuz hesab yarat"}
+              </span>
               <span className="relative z-10 flex items-center gap-2">
                 <LinkLoadingIndicator />
                 <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
               </span>
               <span className="button-sheen" />
             </Link>
-            <Link href="/contact" prefetch className="secondary-action group bg-black/30 backdrop-blur-md">
-              Məktəbim üçün danışaq
+            <Link
+              href={signedIn ? "/roadmap" : "/contact"}
+              prefetch
+              className="secondary-action group bg-black/30 backdrop-blur-md"
+            >
+              {signedIn ? "Təlim xəritəsini aç" : "Məktəbim üçün danışaq"}
               <span className="flex items-center gap-2">
                 <LinkLoadingIndicator />
                 <ChevronRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden="true" />
