@@ -1,5 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccountStatus, ContentStatus, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
+import type { AuthenticatedUser } from '../auth/auth.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfilesService } from '../profiles/profiles.service';
 
@@ -8,6 +10,7 @@ export class AdminService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly profilesService: ProfilesService,
+    private readonly audit: AuditService,
   ) {}
 
   stats() {
@@ -55,12 +58,30 @@ export class AdminService {
     return this.profilesService.listPendingTeachers();
   }
 
-  approveTeacher(id: string) {
-    return this.profilesService.approveTeacher(id);
+  async approveTeacher(actor: AuthenticatedUser, id: string) {
+    const result = await this.profilesService.approveTeacher(id);
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'teacher.approve',
+      targetType: 'profile',
+      targetId: id,
+    });
+
+    return result;
   }
 
-  rejectTeacher(id: string) {
-    return this.profilesService.rejectTeacher(id);
+  async rejectTeacher(actor: AuthenticatedUser, id: string) {
+    const result = await this.profilesService.rejectTeacher(id);
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'teacher.reject',
+      targetType: 'profile',
+      targetId: id,
+    });
+
+    return result;
   }
 
   pendingRooms() {
@@ -81,10 +102,18 @@ export class AdminService {
     });
   }
 
-  async approveRoom(id: string) {
+  async approveRoom(actor: AuthenticatedUser, id: string) {
     const room = await this.prisma.room.findUnique({ where: { id } });
 
     if (!room) throw new NotFoundException('Room tapılmadı');
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'room.publish',
+      targetType: 'room',
+      targetId: id,
+      metadata: { slug: room.slug },
+    });
 
     return this.prisma.room.update({
       where: { id },
@@ -102,10 +131,18 @@ export class AdminService {
     });
   }
 
-  async rejectRoom(id: string) {
+  async rejectRoom(actor: AuthenticatedUser, id: string) {
     const room = await this.prisma.room.findUnique({ where: { id } });
 
     if (!room) throw new NotFoundException('Room tapılmadı');
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'room.archive',
+      targetType: 'room',
+      targetId: id,
+      metadata: { slug: room.slug },
+    });
 
     return this.prisma.room.update({
       where: { id },

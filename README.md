@@ -225,6 +225,7 @@ Baseline-dan sonra `npx prisma migrate deploy` bu dördünü timestamp sırası 
 | 2 | `20260911000200_rls_legacy_tables` | Köhnə cədvəllərdə RLS + revoke. | Yoxdur, təkrar işlədilə bilər |
 | 3 | `20260911000100_answer_attempt_idempotency` | Xal ödənişini idempotent edən iki partial unique index. | Dublikat varsa uğursuz olur və geri qayıdır |
 | 4 | `20260911000300_account_deletion` | `profiles.deleted_at` + partial index. | Yoxdur |
+| 5 | `20260911000400_audit_log` | Admin əməliyyatları üçün `audit_log` cədvəli (RLS açıq). | Yoxdur |
 
 ⚠️ Prisma partial index-ləri görmür: gələcək `prisma migrate dev` 3 və 4-dəki index-ləri silməyi təklif edəcək — **icazə vermə**. Hər iki modeldə bunu deyən `///` şərh var.
 

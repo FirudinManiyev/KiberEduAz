@@ -66,7 +66,11 @@ export class ProfilesController {
 
   @Patch(':id/role')
   @Roles(UserRole.ADMIN)
-  changeRole(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ChangeRoleDto) {
-    return this.profilesService.changeRole(id, dto.role);
+  changeRole(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: ChangeRoleDto,
+  ) {
+    return this.profilesService.changeRole(user, id, dto.role);
   }
 }

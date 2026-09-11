@@ -12,6 +12,7 @@ import {
   UserRole,
   type TaskProgress,
 } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { toRoomDetailForAuthor, toRoomDetailForLearner, toRoomSummary } from './catalog.serializer';
@@ -39,7 +40,10 @@ const CONTENT_INCLUDE = {
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(user: AuthenticatedUser, query: RoomQueryDto) {
     // Admins see the whole catalog, a teacher every published room plus their
@@ -102,9 +106,9 @@ export class RoomsService {
       throw new NotFoundException('Room tapılmadı');
     }
 
-    const isStudent = user.profile.role === UserRole.STUDENT;
-
-    if (isStudent && room.status !== ContentStatus.PUBLISHED) {
+    // Same visibility rule as list(): a draft is only reachable by its author
+    // or an admin, so knowing a slug is not a way around the listing scope.
+    if (!this.canView(user, room)) {
       throw new NotFoundException('Room tapılmadı');
     }
 
@@ -176,7 +180,7 @@ export class RoomsService {
   }
 
   async create(user: AuthenticatedUser, dto: UpsertRoomDto) {
-    await this.assertModuleExists(dto.moduleId);
+    await this.assertCanAttachToModule(user, dto.moduleId);
 
     // Teachers always create drafts; only an admin can publish later.
     const status =
@@ -202,7 +206,7 @@ export class RoomsService {
     await this.assertCanManageRoom(user, id);
 
     if (dto.moduleId) {
-      await this.assertModuleExists(dto.moduleId);
+      await this.assertCanAttachToModule(user, dto.moduleId);
     }
 
     const safeDto =
@@ -217,7 +221,7 @@ export class RoomsService {
     return toRoomDetailForAuthor(room);
   }
 
-  async setStatus(id: string, status: ContentStatus) {
+  async setStatus(actor: AuthenticatedUser, id: string, status: ContentStatus) {
     const room = await this.prisma.room.update({
       where: { id },
       data: {
@@ -227,11 +231,27 @@ export class RoomsService {
       include: CONTENT_INCLUDE,
     });
 
+    await this.audit.record({
+      actorId: actor.id,
+      action: status === ContentStatus.PUBLISHED ? 'room.publish' : 'room.unpublish',
+      targetType: 'room',
+      targetId: id,
+      metadata: { slug: room.slug },
+    });
+
     return toRoomDetailForAuthor(room);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.prisma.room.delete({ where: { id } });
+  async remove(actor: AuthenticatedUser, id: string): Promise<void> {
+    const room = await this.prisma.room.delete({ where: { id }, select: { slug: true } });
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'room.delete',
+      targetType: 'room',
+      targetId: id,
+      metadata: { slug: room.slug },
+    });
   }
 
   async upsertTask(
@@ -405,15 +425,33 @@ export class RoomsService {
     });
   }
 
-  private async assertModuleExists(moduleId: string): Promise<void> {
+  /// A teacher can put a room into any published module, or into a draft they
+  /// authored themselves - not into somebody else's unreviewed draft.
+  private async assertCanAttachToModule(user: AuthenticatedUser, moduleId: string): Promise<void> {
     const found = await this.prisma.learningModule.findUnique({
       where: { id: moduleId },
-      select: { id: true },
+      select: { status: true, createdById: true },
     });
 
     if (!found) {
       throw new NotFoundException('Modul tapılmadı');
     }
+
+    if (user.profile.role === UserRole.ADMIN) return;
+
+    if (found.status !== ContentStatus.PUBLISHED && found.createdById !== user.id) {
+      throw new ForbiddenException('Bu modula room əlavə etmək üçün icazən yoxdur');
+    }
+  }
+
+  private canView(
+    user: AuthenticatedUser,
+    room: { status: ContentStatus; createdById: string | null },
+  ): boolean {
+    if (user.profile.role === UserRole.ADMIN) return true;
+    if (room.status === ContentStatus.PUBLISHED) return true;
+
+    return user.profile.role === UserRole.TEACHER && room.createdById === user.id;
   }
 
   private roomData(dto: Partial<UpsertRoomDto>) {

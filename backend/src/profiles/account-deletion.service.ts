@@ -1,5 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import type { AppConfig } from '../config/configuration';
@@ -14,6 +16,7 @@ export class AccountDeletionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly audit: AuditService,
   ) {}
 
   /// Step one: mark the account. JwtAuthGuard refuses a marked profile from
@@ -38,6 +41,13 @@ export class AccountDeletionService {
 
     this.logger.log(`Account ${user.id} marked for deletion`);
 
+    await this.audit.record({
+      actorId: user.id,
+      action: 'account.delete.request',
+      targetType: 'profile',
+      targetId: user.id,
+    });
+
     return {
       deletedAt,
       purgeAfter: this.purgeCutoffFrom(deletedAt),
@@ -47,7 +57,7 @@ export class AccountDeletionService {
 
   /// Admin-only undo, for the window before the purge. Self-service restore is
   /// impossible by design: a marked account cannot authenticate.
-  async restore(profileId: string) {
+  async restore(profileId: string, actorId: string) {
     const profile = await this.prisma.profile.findUnique({
       where: { id: profileId },
       select: { deletedAt: true },
@@ -64,7 +74,36 @@ export class AccountDeletionService {
 
     this.logger.log(`Account ${profileId} restored`);
 
+    await this.audit.record({
+      actorId,
+      action: 'account.restore',
+      targetType: 'profile',
+      targetId: profileId,
+    });
+
     return { restored: true };
+  }
+
+  /// Nightly at 03:00 server time. In-process so no admin token has to live
+  /// in a cron job; idempotent, so if the free plan ever runs two instances
+  /// the second pass simply finds nothing due. The admin endpoint remains for
+  /// running it by hand.
+  @Cron(CronExpression.EVERY_DAY_AT_3AM, { name: 'purge-deleted-accounts' })
+  async purgeExpiredOnSchedule(): Promise<void> {
+    try {
+      const result = await this.purgeExpired();
+
+      if (result.due > 0) {
+        this.logger.log(
+          `Scheduled purge: ${result.purged}/${result.due} accounts removed, ${result.failed.length} failed`,
+        );
+      }
+    } catch (error) {
+      // A scheduler tick must never take the process down.
+      this.logger.error(
+        `Scheduled purge crashed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   /// Step two, run on a schedule: hard-delete everything whose restore window
@@ -75,7 +114,7 @@ export class AccountDeletionService {
   /// all go with it (onDelete: Cascade). Authored content does NOT: Path,
   /// LearningModule and Room set created_by_id to null, because deleting a
   /// teacher must not take a published curriculum down with them.
-  async purgeExpired() {
+  async purgeExpired(actorId: string | null = null) {
     const cutoff = new Date(Date.now() - RESTORE_WINDOW_DAYS * 24 * 60 * 60 * 1000);
 
     const due = await this.prisma.profile.findMany({
@@ -96,6 +135,16 @@ export class AccountDeletionService {
 
         purged.push(profile.id);
         this.logger.log(`Purged account ${profile.id}`);
+
+        // Recorded after the profile row is gone, so the FK cannot point at
+        // it; the e-mail in metadata is what makes the entry findable later.
+        await this.audit.record({
+          actorId,
+          action: 'account.purge',
+          targetType: 'profile',
+          targetId: profile.id,
+          metadata: { email: profile.email },
+        });
       } catch (error) {
         const reason = error instanceof Error ? error.message : 'unknown error';
 

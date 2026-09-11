@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AccountStatus, ContentStatus, Prisma, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { percentOf } from './catalog.serializer';
@@ -7,24 +8,29 @@ import type { UpsertModuleDto, UpsertPathDto } from './dto/content.dto';
 
 @Injectable()
 export class PathsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   /// The full Path -> Module -> Room tree, annotated with the caller's progress.
   async tree(user: AuthenticatedUser) {
-    const studentsOnly = user.profile.role === UserRole.STUDENT;
-    const publishedOnly = studentsOnly ? { status: ContentStatus.PUBLISHED } : {};
+    // Admins see everything, a learner only what is published, and a teacher
+    // what is published plus their own drafts at every level - the same rule
+    // RoomsService.list applies, so the tree cannot leak what the list hides.
+    const visible = this.visibleFor(user);
 
     const [paths, progress] = await Promise.all([
       this.prisma.path.findMany({
-        where: publishedOnly,
+        where: visible,
         orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
         include: {
           modules: {
-            where: publishedOnly,
+            where: visible,
             orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
             include: {
               rooms: {
-                where: publishedOnly,
+                where: visible,
                 orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
                 include: { _count: { select: { tasks: true } } },
               },
@@ -89,8 +95,16 @@ export class PathsService {
     });
   }
 
-  async removePath(id: string): Promise<void> {
-    await this.prisma.path.delete({ where: { id } });
+  async removePath(actor: AuthenticatedUser, id: string): Promise<void> {
+    const path = await this.prisma.path.delete({ where: { id }, select: { slug: true } });
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'path.delete',
+      targetType: 'path',
+      targetId: id,
+      metadata: { slug: path.slug },
+    });
   }
 
   async createModule(user: AuthenticatedUser, dto: UpsertModuleDto) {
@@ -116,8 +130,32 @@ export class PathsService {
     });
   }
 
-  async removeModule(id: string): Promise<void> {
-    await this.prisma.learningModule.delete({ where: { id } });
+  async removeModule(actor: AuthenticatedUser, id: string): Promise<void> {
+    const module = await this.prisma.learningModule.delete({
+      where: { id },
+      select: { slug: true },
+    });
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'module.delete',
+      targetType: 'module',
+      targetId: id,
+      metadata: { slug: module.slug },
+    });
+  }
+
+  private visibleFor(user: AuthenticatedUser): {
+    OR?: { status?: ContentStatus; createdById?: string }[];
+    status?: ContentStatus;
+  } {
+    if (user.profile.role === UserRole.ADMIN) return {};
+
+    if (user.profile.role === UserRole.TEACHER) {
+      return { OR: [{ status: ContentStatus.PUBLISHED }, { createdById: user.id }] };
+    }
+
+    return { status: ContentStatus.PUBLISHED };
   }
 
   /// Publishing is an admin decision. Teachers draft; `status` is stripped from
