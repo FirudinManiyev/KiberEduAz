@@ -36,6 +36,22 @@ clean at every commit.
 | **F-15** | Leaderboard fell back to the email local-part | Deterministic pseudonym from the profile id (`Tələbə #A3F9`) | `leaderboard.service.ts` | `5306be8` |
 | **F-09** | No account deletion path at all | `DELETE /profiles/me` soft-delete + admin purge/restore; see `docs/account-deletion.md` | `profiles/account-deletion.service.ts` + migration | `b5ac271` |
 
+### Second pass — gaps found while re-reading the code (12 Sep)
+
+Not from any report. Found by tracing what the first pass touched.
+
+| Finding | What was done | Files | Commit |
+|---|---|---|---|
+| **Throttler saw one IP for everyone.** Express was never told to trust Render's proxy, so `req.ip` was the proxy for every request: 120 legitimate requests/min from *anyone* locked *everyone* out, and every per-route limit was per-deployment, not per-client | `app.set('trust proxy', 1)` on a typed `NestExpressApplication` | `main.ts` | `2f6d129` |
+| F-14 only covered listings. `GET /rooms/:slug` and `GET /paths` still showed a teacher every other teacher's draft; a teacher could attach a room to somebody else's unreviewed draft module | Same published-or-own rule on `findBySlug`, on `tree` at every level, and on module attachment (create + re-parent) | `rooms.service.ts`, `paths.service.ts` | `65624d1` |
+| `avatarKey` accepted arbitrary text up to 40 chars | `@Matches(/^[a-z][a-z0-9-]{0,39}$/)` | `update-profile.dto.ts` | `4e59c19` |
+| **F-06 guard had a hole**: `/%5Cevil.com` passed — the raw checks never saw the backslash and URL resolution keeps the escape. Found by writing the tests | Same checks repeated on the decoded form; malformed escapes rejected. 17 payloads tested | `site-url.ts`, `tests/site-url.test.mjs` | `9fee509` |
+| CSP `script-src 'unsafe-inline'` neutered the one directive that matters against XSS | Per-request nonce minted in the proxy, handed to Next.js via `x-nonce`/CSP request headers; `'strict-dynamic'`; static CSP removed from `next.config.ts` (two policies intersect). Still Report-Only | `proxy.ts`, `lib/security/csp.ts`, `next.config.ts` | `be2ce74` |
+| `DELETE /profiles/me` had no UI | Danger-zone section with typed confirmation; signs out and lands on `/login` | `delete-account.tsx`, `profile/page.tsx` | `4641e99` |
+| **No password reset existed at all** | `/forgot-password` → `resetPasswordForEmail` with `redirectTo` pinned to the site URL → `/auth/callback?next=/reset-password` → `updateUser({ password })`. Same response whether or not the address exists | `password-reset.tsx`, two pages, login link | `2074195` |
+| Purge had no scheduler | `@nestjs/schedule`, nightly 03:00, in-process, idempotent, never throws out of the tick | `account-deletion.service.ts` | `4fed9d6` |
+| No audit trail (P3) | `audit_log` table + `AuditService`; actor threaded through every admin endpoint; `GET /admin/audit` | `src/audit/`, migration `…000400` | `28f002c` |
+
 ### False positives — verified, not "fixed"
 
 | ID | Claim | Why it's wrong |
@@ -80,6 +96,7 @@ order matters.
    tables are dropped.
 5. `20260911000300_account_deletion` — adds `profiles.deleted_at` + partial
    index. Safe.
+6. `20260911000400_audit_log` — new `audit_log` table, RLS on. Safe.
 
 ⚠️ **Prisma cannot see partial indexes.** A future `prisma migrate dev` will
 offer to drop the three from steps 3 and 5. Don't let it. Both models carry a
