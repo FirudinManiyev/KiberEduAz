@@ -11,20 +11,22 @@ export class PathsService {
 
   /// The full Path -> Module -> Room tree, annotated with the caller's progress.
   async tree(user: AuthenticatedUser) {
-    const studentsOnly = user.profile.role === UserRole.STUDENT;
-    const publishedOnly = studentsOnly ? { status: ContentStatus.PUBLISHED } : {};
+    // Admins see everything, a learner only what is published, and a teacher
+    // what is published plus their own drafts at every level - the same rule
+    // RoomsService.list applies, so the tree cannot leak what the list hides.
+    const visible = this.visibleFor(user);
 
     const [paths, progress] = await Promise.all([
       this.prisma.path.findMany({
-        where: publishedOnly,
+        where: visible,
         orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
         include: {
           modules: {
-            where: publishedOnly,
+            where: visible,
             orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
             include: {
               rooms: {
-                where: publishedOnly,
+                where: visible,
                 orderBy: [{ orderIndex: 'asc' }, { createdAt: 'asc' }],
                 include: { _count: { select: { tasks: true } } },
               },
@@ -118,6 +120,19 @@ export class PathsService {
 
   async removeModule(id: string): Promise<void> {
     await this.prisma.learningModule.delete({ where: { id } });
+  }
+
+  private visibleFor(user: AuthenticatedUser): {
+    OR?: { status?: ContentStatus; createdById?: string }[];
+    status?: ContentStatus;
+  } {
+    if (user.profile.role === UserRole.ADMIN) return {};
+
+    if (user.profile.role === UserRole.TEACHER) {
+      return { OR: [{ status: ContentStatus.PUBLISHED }, { createdById: user.id }] };
+    }
+
+    return { status: ContentStatus.PUBLISHED };
   }
 
   /// Publishing is an admin decision. Teachers draft; `status` is stripped from
