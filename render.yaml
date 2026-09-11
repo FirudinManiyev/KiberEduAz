@@ -15,8 +15,9 @@ services:
     plan: free
     region: singapore
     rootDir: backend
-    # Deploys track main. Feature and fix work goes through a PR.
-    branch: main
+    # `backend` is this repository's default and deployed branch. Feature and
+    # fix work goes through a PR into it.
+    branch: backend
     # Migrations run BEFORE the build, and are allowed to fail it. A failed
     # build leaves the previous deploy serving traffic, so the schema can
     # never end up behind the code that reads it - which is exactly how the

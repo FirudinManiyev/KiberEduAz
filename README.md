@@ -18,12 +18,12 @@ KiberEduAz/
 
 | Branch | Rolu |
 |---|---|
-| `main` | Yeganə əsas branch. Render (`render.yaml` → `branch: main`) və Vercel bundan deploy edir. Birbaşa push **olunmur**. |
-| `feature/*`, `fix/*`, `security/*` | Bütün iş bunlarda gedir və `main`-ə **Pull Request** ilə birləşir. |
+| `backend` | Repozitoriyanın default və **deploy olunan** branch-ı. Render (`render.yaml` → `branch: backend`) və Vercel bundan deploy edir. Adına baxma — bu, bütün monorepo-nu saxlayır. |
+| `feature/*`, `fix/*`, `security/*` | Bütün iş bunlarda gedir və `backend`-ə **Pull Request** ilə birləşir. |
 
-Niyə PR məcburidir: Render hər commit-də avtomatik deploy edir, amma migration-ları işlətmir (bax "Prisma migration-ları haqqında"). Yeni sütun tələb edən kod migration-dan əvvəl deploy olunsa API bütün sorğularda 500 qaytarır. PR bu iki addımın sırasını qorumaq üçün nəzarət nöqtəsidir: **əvvəl migration, sonra merge.**
+Niyə PR: Render hər commit-də avtomatik deploy edir. PR dəyişikliyə deploy-dan əvvəl baxmaq üçün nəzarət nöqtəsidir. Migration sırası artıq avtomatikdir (aşağıya bax), amma miqrasiya uğursuz olsa build də uğursuz olur — PR-da bunu əvvəlcədən görmək daha ucuzdur.
 
-Köhnə `backend` və `frontend` branch-ları tarixi qalıqdır — hər ikisi bütün monorepo-nu saxlayırdı və heç nəyi ayırmırdı. `frontend` `main`-in içində tam mövcud olduğu üçün silinib; `backend` GitHub-da default branch `main` edildikdən və Render `main`-ə keçirildikdən sonra silinməlidir.
+`main` və `frontend` branch-ları tarixi qalıqdır: hər ikisi bütün monorepo-nu saxlayırdı və heç nəyi ayırmırdı, ikisi də `backend`-dən geridədir. Silinə bilər — `git push origin --delete main frontend`. Əgər əvəzində default branch-ın adının `main` olmasını istəyirsənsə, bu ayrıca addımdır: GitHub Settings → Branches → rename, sonra Render və Vercel-də branch adını yenilə.
 
 ## MVP-də nələr var?
 
