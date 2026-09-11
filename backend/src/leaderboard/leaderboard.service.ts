@@ -43,8 +43,8 @@ export class LeaderboardService {
     const ranked = profiles
       .map((profile) => ({
         id: profile.id,
-        name: profile.fullName ?? profile.username ?? profile.email.split('@')[0],
-        initials: initialsOf(profile.fullName ?? profile.username ?? profile.email),
+        name: displayNameFor(profile),
+        initials: initialsOf(displayNameFor(profile)),
         points: profile.stats?.totalPoints ?? 0,
         roomsCompleted: profile.stats?.roomsCompleted ?? 0,
       }))
@@ -60,6 +60,24 @@ export class LeaderboardService {
       entries: ranked.slice(0, limit),
     };
   }
+}
+
+/// Falls back to a stable pseudonym rather than the email local-part: the
+/// audience is minors and the board is shown to their peers, so an address
+/// must never leak just because a learner has not set a name yet. Derived from
+/// the profile id, so the same learner keeps the same label.
+function displayNameFor(profile: { id: string; fullName: string | null; username: string | null }) {
+  return profile.fullName ?? profile.username ?? `Tələbə #${shortCodeOf(profile.id)}`;
+}
+
+function shortCodeOf(profileId: string): string {
+  let hash = 0;
+
+  for (let index = 0; index < profileId.length; index += 1) {
+    hash = (hash * 31 + profileId.charCodeAt(index)) >>> 0;
+  }
+
+  return hash.toString(16).toUpperCase().padStart(8, '0').slice(0, 4);
 }
 
 function initialsOf(value: string): string {

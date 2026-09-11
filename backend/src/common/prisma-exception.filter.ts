@@ -4,6 +4,7 @@ import {
   ConflictException,
   ExceptionFilter,
   HttpException,
+  InternalServerErrorException,
   Logger,
   NotFoundException,
 } from '@nestjs/common';
@@ -18,8 +19,14 @@ export class PrismaExceptionFilter extends BaseExceptionFilter implements Except
     const translated = this.translate(exception);
 
     if (!translated) {
-      this.logger.error(`Unhandled Prisma error ${exception.code}`, exception.stack);
-      super.catch(exception, host);
+      // A raw Prisma message can carry the failing query and its parameters,
+      // so the detail stays in the server log and the caller gets a generic
+      // 500.
+      this.logger.error(
+        `Unhandled Prisma error ${exception.code}: ${exception.message}`,
+        exception.stack,
+      );
+      super.catch(new InternalServerErrorException('Serverdə gözlənilməz xəta baş verdi'), host);
       return;
     }
 
@@ -29,10 +36,15 @@ export class PrismaExceptionFilter extends BaseExceptionFilter implements Except
   private translate(exception: Prisma.PrismaClientKnownRequestError): HttpException | null {
     switch (exception.code) {
       case 'P2002': {
+        // The constraint target names internal columns, so it goes to the log
+        // rather than to the caller.
         const target = (exception.meta?.target as string[] | undefined)?.join(', ');
-        return new ConflictException(
-          target ? `Bu dəyər artıq mövcuddur: ${target}` : 'Bu dəyər artıq mövcuddur',
-        );
+
+        if (target) {
+          this.logger.warn(`Unique constraint violation on ${target}`);
+        }
+
+        return new ConflictException('Bu dəyər artıq mövcuddur');
       }
       case 'P2003':
         return new ConflictException('Əlaqəli qeyd mövcud deyil');
