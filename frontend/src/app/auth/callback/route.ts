@@ -1,27 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { safeAuthCallbackReason } from "@/lib/auth/callback-error";
+import { getSiteUrl, safeRelativePath } from "@/lib/site-url";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const API_URL = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000/api/v1").replace(
   /\/$/,
   "",
 );
-
-/// Vercel terminates TLS in front of the app, so request.nextUrl still carries the
-/// internal host. Build the redirect from the forwarded headers instead, otherwise
-/// the confirmed visitor is bounced to an origin that does not exist publicly.
-function siteOrigin(request: NextRequest): string {
-  const forwardedHost = request.headers.get("x-forwarded-host");
-
-  if (!forwardedHost) return request.nextUrl.origin;
-
-  return `${request.headers.get("x-forwarded-proto") ?? "https"}://${forwardedHost}`;
-}
-
-function safePath(value: string | null): string | null {
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : null;
-}
 
 /// Teacher sign-up carries its application in user_metadata because the account does
 /// not exist yet when the form is submitted. Confirming the mail is the first moment
@@ -45,8 +31,12 @@ async function finishPendingTeacher(accessToken: string, institutionName: string
 /// `token_hash` + `type`, so both are accepted.
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl;
-  const origin = siteOrigin(request);
-  const next = safePath(searchParams.get("next"));
+
+  // Pinned to NEXT_PUBLIC_SITE_URL rather than built from x-forwarded-host:
+  // that header is attacker-controlled behind any proxy that forwards client
+  // headers unfiltered, and it decides where a confirmed visitor lands.
+  const origin = getSiteUrl();
+  const next = safeRelativePath(searchParams.get("next"));
 
   const code = searchParams.get("code");
   const tokenHash = searchParams.get("token_hash");
@@ -82,22 +72,46 @@ export async function GET(request: NextRequest) {
     | { pending_teacher?: boolean; institution_name?: string }
     | undefined;
 
-  if (session && meta?.pending_teacher) {
-    try {
-      const filed = await finishPendingTeacher(
-        session.access_token,
-        meta.institution_name || "Müəssisə göstərilməyib",
-      );
+  const destination =
+    session && meta?.pending_teacher
+      ? await filePendingTeacher(supabase, session.access_token, meta.institution_name)
+      : (next ?? "/dashboard");
 
-      if (filed) {
-        await supabase.auth.updateUser({ data: { pending_teacher: false } });
-      }
-    } catch {
-      // API unreachable: keep the flag so the next sign-in files the application.
+  const response = NextResponse.redirect(`${origin}${destination}`);
+
+  clearPkceVerifierCookies(request, response);
+
+  return response;
+}
+
+async function filePendingTeacher(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  accessToken: string,
+  institutionName: string | undefined,
+): Promise<string> {
+  try {
+    const filed = await finishPendingTeacher(
+      accessToken,
+      institutionName || "Müəssisə göstərilməyib",
+    );
+
+    if (filed) {
+      await supabase.auth.updateUser({ data: { pending_teacher: false } });
     }
-
-    return NextResponse.redirect(`${origin}/pending`);
+  } catch {
+    // API unreachable: keep the flag so the next sign-in files the application.
   }
 
-  return NextResponse.redirect(`${origin}${next ?? "/dashboard"}`);
+  return "/pending";
+}
+
+/// The PKCE verifier is single-use and is spent by exchangeCodeForSession, but
+/// Supabase writes it with a ~1 year Expires, so on a shared or kiosk browser
+/// it can linger long after the flow it belonged to. Drop it explicitly.
+function clearPkceVerifierCookies(request: NextRequest, response: NextResponse): void {
+  for (const cookie of request.cookies.getAll()) {
+    if (cookie.name.startsWith("sb-") && cookie.name.includes("code-verifier")) {
+      response.cookies.set(cookie.name, "", { path: "/", maxAge: 0 });
+    }
+  }
 }
