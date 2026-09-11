@@ -100,6 +100,12 @@ function fakePrisma(overrides = {}) {
   };
 }
 
+/// Stand-in for AuditService. Never throws, records what it was asked.
+function fakeAudit() {
+  const entries = [];
+  return { entries, record: async (entry) => void entries.push(entry) };
+}
+
 async function statusOf(promise) {
   try {
     await promise;
@@ -115,14 +121,14 @@ async function statusOf(promise) {
 
 test("teacher A cannot read the answer key of teacher B's room", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(rooms.findByIdForAuthor(teacher(TEACHER_A), ROOM_OF_B)), 403);
 });
 
 test("teacher A cannot update teacher B's room, and no write is attempted", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(rooms.update(teacher(TEACHER_A), ROOM_OF_B, { title: "x" })), 403);
   assert.deepEqual(prisma.writes, []);
@@ -130,21 +136,21 @@ test("teacher A cannot update teacher B's room, and no write is attempted", asyn
 
 test("teacher A can update their own room", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(rooms.update(teacher(TEACHER_A), ROOM_OF_A, { title: "x" })), 200);
 });
 
 test("an admin can update any room", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(rooms.update(admin(), ROOM_OF_B, { title: "x" })), 200);
 });
 
 test("a pending teacher cannot manage even their own room", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
   const pending = {
     id: TEACHER_A,
     profile: { role: "TEACHER", accountStatus: "PENDING", organizationId: null },
@@ -155,7 +161,7 @@ test("a pending teacher cannot manage even their own room", async () => {
 
 test("a missing room is 404, not 403", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(
     await statusOf(
@@ -167,7 +173,7 @@ test("a missing room is 404, not 403", async () => {
 
 test("teacher A cannot add a task to teacher B's room", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(
     await statusOf(rooms.upsertTask(teacher(TEACHER_A), ROOM_OF_B, { title: "t" })),
@@ -178,7 +184,7 @@ test("teacher A cannot add a task to teacher B's room", async () => {
 
 test("a task id from another room is rejected even when the room is owned", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   // Teacher A owns ROOM_OF_A, but TASK_IN_B hangs off ROOM_OF_B.
   assert.equal(
@@ -190,7 +196,7 @@ test("a task id from another room is rejected even when the room is owned", asyn
 
 test("deleting a task is scoped to its room", async () => {
   const prisma = fakePrisma();
-  const rooms = new RoomsService(prisma);
+  const rooms = new RoomsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(rooms.removeTask(teacher(TEACHER_A), ROOM_OF_B, TASK_IN_B)), 403);
   assert.equal(await statusOf(rooms.removeTask(teacher(TEACHER_A), ROOM_OF_A, TASK_IN_B)), 404);
@@ -203,7 +209,7 @@ test("deleting a task is scoped to its room", async () => {
 
 test("teacher A cannot update teacher B's path or module", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(paths.updatePath(teacher(TEACHER_A), PATH_OF_B, { slug: "s" })), 403);
   assert.equal(
@@ -215,7 +221,7 @@ test("teacher A cannot update teacher B's path or module", async () => {
 
 test("teacher A can update their own path and module", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   assert.equal(await statusOf(paths.updatePath(teacher(TEACHER_A), PATH_OF_A, { slug: "s" })), 200);
   assert.equal(
@@ -226,7 +232,7 @@ test("teacher A can update their own path and module", async () => {
 
 test("teacher A cannot create a module under teacher B's path", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   assert.equal(
     await statusOf(
@@ -239,7 +245,7 @@ test("teacher A cannot create a module under teacher B's path", async () => {
 
 test("a teacher cannot re-parent their module onto somebody else's path", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   assert.equal(
     await statusOf(paths.updateModule(teacher(TEACHER_A), MODULE_OF_A, { pathId: PATH_OF_B })),
@@ -254,7 +260,7 @@ test("a teacher cannot re-parent their module onto somebody else's path", async 
 
 test("a teacher cannot publish their own module through PATCH", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   await paths.updateModule(teacher(TEACHER_A), MODULE_OF_A, {
     slug: "dd",
@@ -269,7 +275,7 @@ test("a teacher cannot publish their own module through PATCH", async () => {
 
 test("a teacher cannot publish a path through PATCH or POST", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   await paths.updatePath(teacher(TEACHER_A), PATH_OF_A, { slug: "s", status: "PUBLISHED" });
   assert.equal(prisma.writes.at(-1)[1].data.status, undefined);
@@ -281,7 +287,7 @@ test("a teacher cannot publish a path through PATCH or POST", async () => {
 
 test("an admin keeps the ability to publish", async () => {
   const prisma = fakePrisma();
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   await paths.updateModule(admin(), MODULE_OF_B, { slug: "s", status: "PUBLISHED" });
 
@@ -299,11 +305,29 @@ test("a module with no recorded author is admin-only", async () => {
       update: async (args) => args,
     },
   });
-  const paths = new PathsService(prisma);
+  const paths = new PathsService(prisma, fakeAudit());
 
   assert.equal(
     await statusOf(paths.updateModule(teacher(TEACHER_A), MODULE_OF_A, { slug: "s" })),
     403,
   );
   assert.equal(await statusOf(paths.updateModule(admin(), MODULE_OF_A, { slug: "s" })), 200);
+});
+
+// ---------------------------------------------------------------------------
+// Audit trail
+// ---------------------------------------------------------------------------
+
+test("an admin publishing a room leaves an audit entry naming the actor", async () => {
+  const prisma = fakePrisma();
+  const audit = fakeAudit();
+  const rooms = new RoomsService(prisma, audit);
+
+  await rooms.setStatus(admin(), ROOM_OF_B, "PUBLISHED");
+
+  assert.equal(audit.entries.length, 1);
+  assert.deepEqual(
+    { actorId: audit.entries[0].actorId, action: audit.entries[0].action, targetId: audit.entries[0].targetId },
+    { actorId: ADMIN, action: "room.publish", targetId: ROOM_OF_B },
+  );
 });

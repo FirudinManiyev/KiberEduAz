@@ -5,13 +5,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { AccountStatus, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import type { RequestTeacherDto, UpdateProfileDto } from './dto/update-profile.dto';
 
 @Injectable()
 export class ProfilesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async me(user: AuthenticatedUser) {
     const [profile, stats, classes, taughtClasses] = await Promise.all([
@@ -102,7 +106,22 @@ export class ProfilesService {
     return this.me(user);
   }
 
-  async changeRole(profileId: string, role: UserRole) {
+  async changeRole(actor: AuthenticatedUser, profileId: string, role: UserRole) {
+    const before = await this.prisma.profile.findUnique({
+      where: { id: profileId },
+      select: { role: true },
+    });
+
+    if (!before) throw new NotFoundException('İstifadəçi tapılmadı');
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'profile.role.change',
+      targetType: 'profile',
+      targetId: profileId,
+      metadata: { from: before.role, to: role },
+    });
+
     const data: { role: UserRole; accountStatus?: AccountStatus } = { role };
 
     if (role === UserRole.TEACHER) {

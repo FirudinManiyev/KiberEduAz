@@ -1,5 +1,6 @@
 import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { AccountStatus, ContentStatus, Prisma, UserRole } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { percentOf } from './catalog.serializer';
@@ -7,7 +8,10 @@ import type { UpsertModuleDto, UpsertPathDto } from './dto/content.dto';
 
 @Injectable()
 export class PathsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   /// The full Path -> Module -> Room tree, annotated with the caller's progress.
   async tree(user: AuthenticatedUser) {
@@ -91,8 +95,16 @@ export class PathsService {
     });
   }
 
-  async removePath(id: string): Promise<void> {
-    await this.prisma.path.delete({ where: { id } });
+  async removePath(actor: AuthenticatedUser, id: string): Promise<void> {
+    const path = await this.prisma.path.delete({ where: { id }, select: { slug: true } });
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'path.delete',
+      targetType: 'path',
+      targetId: id,
+      metadata: { slug: path.slug },
+    });
   }
 
   async createModule(user: AuthenticatedUser, dto: UpsertModuleDto) {
@@ -118,8 +130,19 @@ export class PathsService {
     });
   }
 
-  async removeModule(id: string): Promise<void> {
-    await this.prisma.learningModule.delete({ where: { id } });
+  async removeModule(actor: AuthenticatedUser, id: string): Promise<void> {
+    const module = await this.prisma.learningModule.delete({
+      where: { id },
+      select: { slug: true },
+    });
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'module.delete',
+      targetType: 'module',
+      targetId: id,
+      metadata: { slug: module.slug },
+    });
   }
 
   private visibleFor(user: AuthenticatedUser): {

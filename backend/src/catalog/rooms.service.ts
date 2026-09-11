@@ -12,6 +12,7 @@ import {
   UserRole,
   type TaskProgress,
 } from '@prisma/client';
+import { AuditService } from '../audit/audit.service';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { toRoomDetailForAuthor, toRoomDetailForLearner, toRoomSummary } from './catalog.serializer';
@@ -39,7 +40,10 @@ const CONTENT_INCLUDE = {
 
 @Injectable()
 export class RoomsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly audit: AuditService,
+  ) {}
 
   async list(user: AuthenticatedUser, query: RoomQueryDto) {
     // Admins see the whole catalog, a teacher every published room plus their
@@ -217,7 +221,7 @@ export class RoomsService {
     return toRoomDetailForAuthor(room);
   }
 
-  async setStatus(id: string, status: ContentStatus) {
+  async setStatus(actor: AuthenticatedUser, id: string, status: ContentStatus) {
     const room = await this.prisma.room.update({
       where: { id },
       data: {
@@ -227,11 +231,27 @@ export class RoomsService {
       include: CONTENT_INCLUDE,
     });
 
+    await this.audit.record({
+      actorId: actor.id,
+      action: status === ContentStatus.PUBLISHED ? 'room.publish' : 'room.unpublish',
+      targetType: 'room',
+      targetId: id,
+      metadata: { slug: room.slug },
+    });
+
     return toRoomDetailForAuthor(room);
   }
 
-  async remove(id: string): Promise<void> {
-    await this.prisma.room.delete({ where: { id } });
+  async remove(actor: AuthenticatedUser, id: string): Promise<void> {
+    const room = await this.prisma.room.delete({ where: { id }, select: { slug: true } });
+
+    await this.audit.record({
+      actorId: actor.id,
+      action: 'room.delete',
+      targetType: 'room',
+      targetId: id,
+      metadata: { slug: room.slug },
+    });
   }
 
   async upsertTask(

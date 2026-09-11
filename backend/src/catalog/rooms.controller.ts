@@ -60,21 +60,21 @@ export class RoomsController {
   /// Only admins can grant public access to a room a teacher drafted.
   @Post(':id/publish')
   @Roles(UserRole.ADMIN)
-  publish(@Param('id', ParseUUIDPipe) id: string) {
-    return this.roomsService.setStatus(id, ContentStatus.PUBLISHED);
+  publish(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.roomsService.setStatus(user, id, ContentStatus.PUBLISHED);
   }
 
   @Post(':id/unpublish')
   @Roles(UserRole.ADMIN)
-  unpublish(@Param('id', ParseUUIDPipe) id: string) {
-    return this.roomsService.setStatus(id, ContentStatus.DRAFT);
+  unpublish(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.roomsService.setStatus(user, id, ContentStatus.DRAFT);
   }
 
   @Delete(':id')
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.roomsService.remove(id);
+  remove(@CurrentUser() user: AuthenticatedUser, @Param('id', ParseUUIDPipe) id: string) {
+    return this.roomsService.remove(user, id);
   }
 
   @Post(':id/tasks')

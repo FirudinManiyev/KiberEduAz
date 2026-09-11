@@ -159,6 +159,7 @@ model Profile {
   stats          UserStats?
   pointsLedger   PointsLedger[]
   notifications  Notification[]
+  auditEntries   AuditLog[]
 
   @@index([organizationId])
   @@index([role])
@@ -430,4 +431,24 @@ model Notification {
 
   @@index([profileId, createdAt(sort: Desc)])
   @@map("notifications")
+}
+
+/// Append-only record of privileged actions (approve/reject, publish,
+/// role change, curriculum delete, account restore/purge). `actorId` is null
+/// for the scheduler and after the actor's own account has been purged.
+model AuditLog {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId    String?  @map("actor_id") @db.Uuid
+  action     String
+  targetType String   @map("target_type")
+  targetId   String?  @map("target_id") @db.Uuid
+  metadata   Json     @default("{}")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor Profile? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt(sort: Desc)])
+  @@index([actorId])
+  @@index([targetType, targetId])
+  @@map("audit_log")
 }
