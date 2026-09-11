@@ -15,16 +15,19 @@ services:
     plan: free
     region: singapore
     rootDir: backend
-    # Deploys track main. Feature and fix work goes through a PR so that a
-    # push cannot ship code ahead of the migrations it depends on.
-    branch: main
-    # Prisma migrations are intentionally NOT run here - see README "Deploy".
-    # The schema was applied to Supabase out of band, so `migrate deploy` must
-    # be baselined once from a workstation before it can run unattended.
+    # `backend` is this repository's default and deployed branch. Feature and
+    # fix work goes through a PR into it.
+    branch: backend
+    # Migrations run BEFORE the build, and are allowed to fail it. A failed
+    # build leaves the previous deploy serving traffic, so the schema can
+    # never end up behind the code that reads it - which is exactly how the
+    # 12 Sep outage happened. prisma/deploy.mjs baselines automatically when
+    # the database has the tables but no migration history, the state this
+    # project has been in since the schema was applied by hand.
     # --include=dev is required: NODE_ENV=production below makes npm omit
     # devDependencies by default, and the build needs @nestjs/cli, prisma and
     # typescript from there.
-    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run prisma:deploy && npm run build
     startCommand: npm run start:prod
     healthCheckPath: /api/v1/health
     autoDeployTrigger: commit

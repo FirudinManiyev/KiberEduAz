@@ -18,12 +18,12 @@ KiberEduAz/
 
 | Branch | Rolu |
 |---|---|
-| `main` | Yeganə əsas branch. Render (`render.yaml` → `branch: main`) və Vercel bundan deploy edir. Birbaşa push **olunmur**. |
-| `feature/*`, `fix/*`, `security/*` | Bütün iş bunlarda gedir və `main`-ə **Pull Request** ilə birləşir. |
+| `backend` | Repozitoriyanın default və **deploy olunan** branch-ı. Render (`render.yaml` → `branch: backend`) və Vercel bundan deploy edir. Adına baxma — bu, bütün monorepo-nu saxlayır. |
+| `feature/*`, `fix/*`, `security/*` | Bütün iş bunlarda gedir və `backend`-ə **Pull Request** ilə birləşir. |
 
-Niyə PR məcburidir: Render hər commit-də avtomatik deploy edir, amma migration-ları işlətmir (bax "Prisma migration-ları haqqında"). Yeni sütun tələb edən kod migration-dan əvvəl deploy olunsa API bütün sorğularda 500 qaytarır. PR bu iki addımın sırasını qorumaq üçün nəzarət nöqtəsidir: **əvvəl migration, sonra merge.**
+Niyə PR: Render hər commit-də avtomatik deploy edir. PR dəyişikliyə deploy-dan əvvəl baxmaq üçün nəzarət nöqtəsidir. Migration sırası artıq avtomatikdir (aşağıya bax), amma miqrasiya uğursuz olsa build də uğursuz olur — PR-da bunu əvvəlcədən görmək daha ucuzdur.
 
-Köhnə `backend` və `frontend` branch-ları tarixi qalıqdır — hər ikisi bütün monorepo-nu saxlayırdı və heç nəyi ayırmırdı. `frontend` `main`-in içində tam mövcud olduğu üçün silinib; `backend` GitHub-da default branch `main` edildikdən və Render `main`-ə keçirildikdən sonra silinməlidir.
+`main` və `frontend` branch-ları tarixi qalıqdır: hər ikisi bütün monorepo-nu saxlayırdı və heç nəyi ayırmırdı, ikisi də `backend`-dən geridədir. Silinə bilər — `git push origin --delete main frontend`. Əgər əvəzində default branch-ın adının `main` olmasını istəyirsənsə, bu ayrıca addımdır: GitHub Settings → Branches → rename, sonra Render və Vercel-də branch adını yenilə.
 
 ## MVP-də nələr var?
 
@@ -223,13 +223,17 @@ Baseline-dan sonra `npx prisma migrate deploy` bu dördünü timestamp sırası 
 | 0 | `prisma/manual/find_duplicate_correct_attempts.sql` | **Əvvəlcə əl ilə, yalnız oxu.** Eyni suala təkrar düzgün cavab və təkrar room bonusu qeydlərini tapır. | 2-ci sorğu `0`-dan başqa nəsə qaytarırsa **dayan** — 3-cü migration uğursuz olacaq. Skript heç nə silmir. |
 | 1 | `20260911000000_module_ownership` | `learning_modules.created_by_id` (nullable). Köhnə sətirlər yalnız admin-ə aiddir. | Yoxdur |
 | 2 | `20260911000200_rls_legacy_tables` | Köhnə cədvəllərdə RLS + revoke. | Yoxdur, təkrar işlədilə bilər |
-| 3 | `20260911000100_answer_attempt_idempotency` | Xal ödənişini idempotent edən iki partial unique index. | Dublikat varsa uğursuz olur və geri qayıdır |
-| 4 | `20260911000300_account_deletion` | `profiles.deleted_at` + partial index. | Yoxdur |
-| 5 | `20260911000400_audit_log` | Admin əməliyyatları üçün `audit_log` cədvəli (RLS açıq). | Yoxdur |
+| 3 | `20260911000300_account_deletion` | `profiles.deleted_at` + partial index. **API-nin işləməsi üçün ən vacibi** — `JwtAuthGuard` hər sorğuda bu sütunu oxuyur. | Yoxdur |
+| 4 | `20260911000400_audit_log` | Admin əməliyyatları üçün `audit_log` cədvəli (RLS açıq). | Yoxdur |
+| 5 | `20260911000500_answer_attempt_idempotency` | Xal ödənişini idempotent edən iki partial unique index. **Qəsdən sonuncudur:** dublikat varsa yalnız bu addım uğursuz olur, ondan əvvəlki hamısı artıq tətbiq olunub və sayt işləyir. | Dublikat varsa uğursuz olur |
 
-⚠️ Prisma partial index-ləri görmür: gələcək `prisma migrate dev` 3 və 4-dəki index-ləri silməyi təklif edəcək — **icazə vermə**. Hər iki modeldə bunu deyən `///` şərh var.
+⚠️ Prisma partial index-ləri görmür: gələcək `prisma migrate dev` 3 və 5-dəki index-ləri silməyi təklif edəcək — **icazə vermə**. Hər iki modeldə bunu deyən `///` şərh var.
 
-Migration-lar tətbiq olunmadan bu kodu deploy etmə: `JwtAuthGuard` profil sətrinin hamısını oxuyur, `deleted_at` sütunu olmayan bazada isə **hər autentifikasiyalı sorğu** 500 verir.
+**Artıq avtomatikdir.** `render.yaml`-dakı `buildCommand` build-dən əvvəl `npm run prisma:deploy` işlədir (`prisma/deploy.mjs`). Skript bazaya baxır və üç yoldan birini seçir: cədvəllər var, amma `_prisma_migrations` yoxdursa — əl ilə tətbiq olunmuş iki migration-ı "applied" kimi işarələyib qalanını tətbiq edir; baza boşdursa sxemi sıfırdan qurur; tarixçə varsa sadəcə gözləyənləri tətbiq edir. Təkrar işləməsi zərərsizdir.
+
+Migration uğursuz olsa **build uğursuz olur və köhnə deploy trafikə xidmət etməyə davam edir** — yəni kod heç vaxt uyğun gəlmədiyi sxemin üzərində işə düşmür. 12 Sentyabr nasazlığı məhz bunun əksi idi.
+
+Hazırkı vəziyyəti yoxlamaq üçün: `backend/prisma/manual/check_migration_state.sql` (yalnız oxu, Supabase SQL Editor-a yapışdır).
 
 Tam siyahı və əl ilə görüləcək addımlar: `docs/security-remediation-2026-09.md`. Deploy-dan sonra `scripts/security-smoke.sh` ilə audit PoC-larının 403 qaytardığını yoxla.
 

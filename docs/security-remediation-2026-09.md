@@ -89,14 +89,17 @@ order matters.
    numbers and I'll write the correction.
 2. `20260911000000_module_ownership` — adds `learning_modules.created_by_id`
    (nullable + FK + index). Safe on a live table.
-3. `20260911000100_answer_attempt_idempotency` — the two partial unique
-   indexes. **This is the one that can fail**, and only because of step 1.
-4. `20260911000200_rls_legacy_tables` — RLS + revoke on legacy tables. Safe and
+3. `20260911000200_rls_legacy_tables` — RLS + revoke on legacy tables. Safe and
    replayable; guarded with `to_regclass` so it still works after the legacy
    tables are dropped.
-5. `20260911000300_account_deletion` — adds `profiles.deleted_at` + partial
-   index. Safe.
-6. `20260911000400_audit_log` — new `audit_log` table, RLS on. Safe.
+4. `20260911000300_account_deletion` — adds `profiles.deleted_at` + partial
+   index. Safe, and the one the whole API depends on: `JwtAuthGuard` loads the
+   full profile row on every authenticated request.
+5. `20260911000400_audit_log` — new `audit_log` table, RLS on. Safe.
+6. `20260911000500_answer_attempt_idempotency` — the two partial unique
+   indexes. **This is the one that can fail**, and only because of step 1.
+   Deliberately renumbered to run last (it was `…000100`), so a duplicate-row
+   failure leaves every migration the API needs already applied.
 
 ⚠️ **Prisma cannot see partial indexes.** A future `prisma migrate dev` will
 offer to drop the three from steps 3 and 5. Don't let it. Both models carry a
