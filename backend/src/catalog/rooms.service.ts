@@ -1,5 +1,11 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import {
+  AccountStatus,
   ContentStatus,
   Prisma,
   QuestionType,
@@ -36,25 +42,37 @@ export class RoomsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async list(user: AuthenticatedUser, query: RoomQueryDto) {
-    const canSeeDrafts = user.profile.role !== UserRole.STUDENT;
-    const status = canSeeDrafts ? query.status : ContentStatus.PUBLISHED;
+    // Admins see the whole catalog, a teacher every published room plus their
+    // own drafts, and a learner only what is published.
+    const visibility = this.visibleRoomsFor(user);
+    const status = user.profile.role === UserRole.STUDENT ? undefined : query.status;
 
     const where: Prisma.RoomWhereInput = {
-      ...(status ? { status } : canSeeDrafts ? {} : { status: ContentStatus.PUBLISHED }),
+      ...(status ? { status } : {}),
       ...(query.category ? { category: query.category } : {}),
       ...(query.type ? { type: query.type } : {}),
       ...(query.difficulty ? { difficulty: query.difficulty } : {}),
-      ...(query.search
-        ? {
-            OR: [
-              { title: { contains: query.search, mode: 'insensitive' } },
-              { shortTitle: { contains: query.search, mode: 'insensitive' } },
-              { description: { contains: query.search, mode: 'insensitive' } },
-              { module: { title: { contains: query.search, mode: 'insensitive' } } },
-              { module: { path: { title: { contains: query.search, mode: 'insensitive' } } } },
-            ],
-          }
-        : {}),
+      // AND-composed so the visibility scope cannot be shadowed by the search OR.
+      AND: [
+        visibility,
+        ...(query.search
+          ? [
+              {
+                OR: [
+                  { title: { contains: query.search, mode: 'insensitive' as const } },
+                  { shortTitle: { contains: query.search, mode: 'insensitive' as const } },
+                  { description: { contains: query.search, mode: 'insensitive' as const } },
+                  { module: { title: { contains: query.search, mode: 'insensitive' as const } } },
+                  {
+                    module: {
+                      path: { title: { contains: query.search, mode: 'insensitive' as const } },
+                    },
+                  },
+                ],
+              },
+            ]
+          : []),
+      ],
     };
 
     const [rooms, progress] = await Promise.all([
@@ -144,7 +162,10 @@ export class RoomsService {
     return new Set(rows.map((row) => row.questionId));
   }
 
-  async findByIdForAuthor(id: string) {
+  /// Serves the answer key, so the caller must own the room (or be an admin).
+  async findByIdForAuthor(user: AuthenticatedUser, id: string) {
+    await this.assertCanManageRoom(user, id);
+
     const room = await this.prisma.room.findUnique({ where: { id }, include: CONTENT_INCLUDE });
 
     if (!room) {
@@ -178,6 +199,8 @@ export class RoomsService {
   }
 
   async update(user: AuthenticatedUser, id: string, dto: Partial<UpsertRoomDto>) {
+    await this.assertCanManageRoom(user, id);
+
     if (dto.moduleId) {
       await this.assertModuleExists(dto.moduleId);
     }
@@ -211,7 +234,14 @@ export class RoomsService {
     await this.prisma.room.delete({ where: { id } });
   }
 
-  async upsertTask(roomId: string, dto: UpsertTaskDto, taskId?: string) {
+  async upsertTask(
+    user: AuthenticatedUser,
+    roomId: string,
+    dto: UpsertTaskDto,
+    taskId?: string,
+  ) {
+    await this.assertCanManageRoom(user, roomId);
+
     const room = await this.prisma.room.findUnique({
       where: { id: roomId },
       select: { id: true, _count: { select: { tasks: true } } },
@@ -219,6 +249,12 @@ export class RoomsService {
 
     if (!room) {
       throw new NotFoundException('Room tapılmadı');
+    }
+
+    // A task id in the URL must hang off the room id in the URL, otherwise an
+    // owned room becomes a handle on somebody else’s tasks.
+    if (taskId) {
+      await this.assertTaskBelongsToRoom(roomId, taskId);
     }
 
     const orderIndex = dto.orderIndex ?? room._count.tasks + 1;
@@ -260,8 +296,66 @@ export class RoomsService {
     });
   }
 
-  async removeTask(taskId: string): Promise<void> {
-    await this.prisma.task.delete({ where: { id: taskId } });
+  async removeTask(user: AuthenticatedUser, roomId: string, taskId: string): Promise<void> {
+    await this.assertCanManageRoom(user, roomId);
+
+    // Scoped to the room, so a mismatched nesting can never delete.
+    const { count } = await this.prisma.task.deleteMany({ where: { id: taskId, roomId } });
+
+    if (count === 0) {
+      throw new NotFoundException('Task tapılmadı');
+    }
+  }
+
+  /// Admins manage the whole catalog; a teacher only the rooms they authored.
+  /// Mirrors ClassesService.assertCanManage.
+  private async assertCanManageRoom(user: AuthenticatedUser, roomId: string) {
+    const room = await this.prisma.room.findUnique({
+      where: { id: roomId },
+      select: { id: true, createdById: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Room tapılmadı');
+    }
+
+    if (user.profile.role === UserRole.ADMIN) {
+      return room;
+    }
+
+    if (
+      user.profile.role !== UserRole.TEACHER ||
+      user.profile.accountStatus !== AccountStatus.ACTIVE
+    ) {
+      throw new ForbiddenException('Bu otağı idarə etmək üçün icazən yoxdur');
+    }
+
+    if (room.createdById !== user.id) {
+      throw new ForbiddenException('Bu otaq sənə aid deyil');
+    }
+
+    return room;
+  }
+
+  private async assertTaskBelongsToRoom(roomId: string, taskId: string): Promise<void> {
+    const task = await this.prisma.task.findUnique({
+      where: { id: taskId },
+      select: { roomId: true },
+    });
+
+    if (!task || task.roomId !== roomId) {
+      throw new NotFoundException('Task tapılmadı');
+    }
+  }
+
+  private visibleRoomsFor(user: AuthenticatedUser): Prisma.RoomWhereInput {
+    if (user.profile.role === UserRole.ADMIN) return {};
+
+    if (user.profile.role === UserRole.TEACHER) {
+      return { OR: [{ status: ContentStatus.PUBLISHED }, { createdById: user.id }] };
+    }
+
+    return { status: ContentStatus.PUBLISHED };
   }
 
   private async createQuestion(
