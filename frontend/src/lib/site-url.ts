@@ -8,12 +8,28 @@
 /// bounce to a dead address - and the second is attacker-controlled behind any
 /// proxy that forwards client headers unfiltered.
 ///
-/// In production the variable is required and its absence throws, rather than
-/// silently falling back to localhost. Locally it defaults to the dev server.
+/// Resolution order:
+///   1. NEXT_PUBLIC_SITE_URL - explicit configuration always wins.
+///   2. Vercel's own production-domain variable. Set by the build system, not
+///      by a request, so it keeps the property that matters: an attacker
+///      cannot influence it. This is what stops a deploy that forgot step 1
+///      from breaking sign-up.
+///   3. http://localhost:3000, development only.
+/// In production, running out of options throws rather than guessing.
 const DEV_FALLBACK = "http://localhost:3000";
 
 function normalize(value: string): string {
   return value.trim().replace(/\/+$/, "");
+}
+
+/// Vercel exposes the production domain as a bare host with no scheme, so it
+/// gets one. Anything already carrying a scheme is left alone.
+function asOrigin(value: string | undefined): string | null {
+  if (!value || !value.trim()) return null;
+
+  const trimmed = normalize(value);
+
+  return /^https?:\/\//.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
 export function getSiteUrl(): string {
@@ -22,7 +38,8 @@ export function getSiteUrl(): string {
   if (configured && configured.trim()) {
     const url = normalize(configured);
 
-    // A bare host in the env var would produce a relative redirect.
+    // A bare host here is a typo, not a Vercel system variable: say so rather
+    // than quietly assuming https.
     if (!/^https?:\/\//.test(url)) {
       throw new Error(
         `NEXT_PUBLIC_SITE_URL must include the scheme, e.g. https://example.com (got "${configured}")`,
@@ -31,6 +48,14 @@ export function getSiteUrl(): string {
 
     return url;
   }
+
+  // NEXT_PUBLIC_ is the client-visible one; the bare name is available in
+  // server components, route handlers and the proxy.
+  const fromPlatform =
+    asOrigin(process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL) ??
+    asOrigin(process.env.VERCEL_PROJECT_PRODUCTION_URL);
+
+  if (fromPlatform) return fromPlatform;
 
   if (process.env.NODE_ENV === "production") {
     throw new Error(

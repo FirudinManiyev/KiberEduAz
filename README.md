@@ -182,7 +182,7 @@ Sıra vacibdir: **əvvəlcə backend deploy olunur → URL alınır → Vercel-�
 
 | Dəyişən | Dəyər |
 |---|---|
-| `NEXT_PUBLIC_SITE_URL` | **Məcburidir.** Saytın public origin-i, sonda `/` olmadan, məsələn `https://kiberedu.vercel.app`. Bütün auth e-poçtları (təsdiq, parol sıfırlama) linkini bundan qurur və `/auth/callback` yönləndirməni buna bağlayır. Production build bu dəyişən olmadan **qəsdən xəta verir** — `localhost`-a səssiz düşməkdənsə. |
+| `NEXT_PUBLIC_SITE_URL` | Saytın public origin-i, sonda `/` olmadan, məsələn `https://kiberedu.vercel.app`. Bütün auth e-poçtları (təsdiq, parol sıfırlama) linkini bundan qurur və `/auth/callback` yönləndirməni buna bağlayır. Vercel-də **isteğe bağlıdır**: təyin edilməsə tətbiq Vercel-in öz `VERCEL_PROJECT_PRODUCTION_URL` dəyişəninə düşür. Öz domenin olanda mütləq açıq yaz — Vercel dəyişəni `*.vercel.app`-ı göstərməyə davam edir. Vercel-dən kənarda production-da məcburidir. |
 | `NEXT_PUBLIC_API_URL` | Render URL-i + prefiks, məsələn `https://kiberedu-api.onrender.com/api/v1` |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://okyhjpywngmportlzmxo.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key (açıq paylaşıla bilər) |
