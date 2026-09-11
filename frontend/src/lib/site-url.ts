@@ -68,6 +68,25 @@ export function safeRelativePath(value: string | null | undefined): string | nul
     if (code < 0x20 || code === 0x7f) return null;
   }
 
+  // The same checks again on the decoded form, so %5C and %2F%2F cannot
+  // smuggle in what the raw checks just refused. Malformed escapes are not a
+  // path we generated either.
+  let decoded: string;
+
+  try {
+    decoded = decodeURIComponent(value);
+  } catch {
+    return null;
+  }
+
+  if (decoded.startsWith("//") || decoded.includes("\\")) return null;
+
+  for (let i = 0; i < decoded.length; i += 1) {
+    const code = decoded.charCodeAt(i);
+
+    if (code < 0x20 || code === 0x7f) return null;
+  }
+
   let site: URL;
 
   try {
