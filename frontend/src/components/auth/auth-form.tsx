@@ -338,6 +338,14 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               </button>
             </form>
 
+            {mode === "login" && (
+              <p className="mt-4 text-center text-xs text-slate-600">
+                <Link href="/forgot-password" className="font-semibold text-slate-400 hover:text-emerald-300 hover:underline">
+                  Parolunu unutmusan?
+                </Link>
+              </p>
+            )}
+
             <p className="mt-6 text-center text-xs text-slate-600">
               {copy.switchText}{" "}
               <Link href={switchHref} className="font-semibold text-emerald-300 hover:underline">
