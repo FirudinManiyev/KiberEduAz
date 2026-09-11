@@ -37,25 +37,30 @@ export class ProgressService {
     }
 
     const isCorrect = this.grade(question, dto);
-    const alreadySolved = await this.prisma.answerAttempt.findFirst({
-      where: { profileId: user.id, questionId, isCorrect: true },
-      select: { id: true },
-    });
-
-    // Points are only ever paid out once per question.
-    const pointsAwarded = isCorrect && !alreadySolved ? question.points : 0;
 
     return this.prisma.$transaction(async (tx) => {
-      await tx.answerAttempt.create({
+      // Points are only ever paid out once per question, and the insert is
+      // what decides it. A partial unique index on (profile_id, question_id)
+      // WHERE is_correct means exactly one correct attempt per learner and
+      // question survives, so two concurrent correct submissions cannot both
+      // observe "not yet solved" and both pay. skipDuplicates turns the loser
+      // into ON CONFLICT DO NOTHING rather than an error that would poison
+      // the surrounding transaction.
+      const inserted = await tx.answerAttempt.createMany({
         data: {
           profileId: user.id,
           questionId,
           taskId: question.taskId,
           submittedAnswer: this.normalizeAnswer(dto),
           isCorrect,
-          pointsAwarded,
+          pointsAwarded: isCorrect ? question.points : 0,
         },
+        skipDuplicates: true,
       });
+
+      // count === 0 means this learner had already solved the question: a
+      // normal "already solved" answer, just without a second payout.
+      const pointsAwarded = isCorrect && inserted.count > 0 ? question.points : 0;
 
       if (pointsAwarded > 0) {
         await tx.pointsLedger.create({
@@ -283,18 +288,26 @@ export class ProgressService {
     let bonus = 0;
 
     // On first completion, top the learner up to the room's advertised reward.
+    // Same idempotency as the answer payout: a partial unique index on
+    // (profile_id, room_id) WHERE reason = 'ROOM_COMPLETED' makes the ledger
+    // insert the arbiter, so a concurrent second completion pays nothing.
     if (justCompleted && previous?.status !== ProgressStatus.COMPLETED) {
       bonus = Math.max(0, room.points - earned);
 
       if (bonus > 0) {
-        await tx.pointsLedger.create({
+        const paid = await tx.pointsLedger.createMany({
           data: {
             profileId,
             amount: bonus,
             reason: PointsReason.ROOM_COMPLETED,
             roomId: room.id,
           },
+          skipDuplicates: true,
         });
+
+        if (paid.count === 0) {
+          bonus = 0;
+        }
       }
     } else if (previous?.status === ProgressStatus.COMPLETED) {
       const roomTotal = await tx.pointsLedger.aggregate({

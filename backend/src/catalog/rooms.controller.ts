@@ -31,11 +31,14 @@ export class RoomsController {
     return this.roomsService.findBySlug(user, slug);
   }
 
-  /// Returns the answer key, so it is restricted to content authors.
+  /// Returns the answer key, so it is restricted to the room's own author.
   @Get(':id/edit')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
-  findForAuthor(@Param('id', ParseUUIDPipe) id: string) {
-    return this.roomsService.findByIdForAuthor(id);
+  findForAuthor(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.roomsService.findByIdForAuthor(user, id);
   }
 
   @Post()
@@ -76,24 +79,33 @@ export class RoomsController {
 
   @Post(':id/tasks')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
-  createTask(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpsertTaskDto) {
-    return this.roomsService.upsertTask(id, dto);
+  createTask(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpsertTaskDto,
+  ) {
+    return this.roomsService.upsertTask(user, id, dto);
   }
 
   @Patch(':id/tasks/:taskId')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
   updateTask(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseUUIDPipe) id: string,
     @Param('taskId', ParseUUIDPipe) taskId: string,
     @Body() dto: UpsertTaskDto,
   ) {
-    return this.roomsService.upsertTask(id, dto, taskId);
+    return this.roomsService.upsertTask(user, id, dto, taskId);
   }
 
   @Delete(':id/tasks/:taskId')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
   @HttpCode(HttpStatus.NO_CONTENT)
-  removeTask(@Param('taskId', ParseUUIDPipe) taskId: string) {
-    return this.roomsService.removeTask(taskId);
+  removeTask(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('taskId', ParseUUIDPipe) taskId: string,
+  ) {
+    return this.roomsService.removeTask(user, id, taskId);
   }
 }

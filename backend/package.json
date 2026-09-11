@@ -14,7 +14,8 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:baseline": "prisma migrate resolve --applied 20260811000000_init",
     "prisma:studio": "prisma studio",
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "ts-node prisma/seed.ts",
+    "test": "tsx --test tests/*.test.mjs"
   },
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
@@ -24,7 +25,6 @@
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.6",
     "@nestjs/platform-express": "^11.1.6",
-    "@nestjs/swagger": "^11.2.0",
     "@nestjs/throttler": "^6.4.0",
     "@prisma/client": "^6.16.2",
     "class-transformer": "^0.5.1",
@@ -43,6 +43,7 @@
     "prettier": "^3.6.2",
     "prisma": "^6.16.2",
     "ts-node": "^10.9.2",
+    "tsx": "^4.23.13",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.44.0"
   }

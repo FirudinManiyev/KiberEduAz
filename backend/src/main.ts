@@ -13,8 +13,30 @@ async function bootstrap(): Promise<void> {
 
   const corsOrigins = config.getOrThrow<string[]>('corsOrigins');
 
+  const logger = new Logger('Bootstrap');
+
   app.setGlobalPrefix('api/v1');
-  app.use(helmet());
+
+  // This process only ever serves JSON to the SPA, so the browser should
+  // execute nothing it returns and send no referrer anywhere.
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'none'"],
+          frameAncestors: ["'none'"],
+          scriptSrc: ["'none'"],
+          styleSrc: ["'none'"],
+          imgSrc: ["'none'"],
+          baseUri: ["'none'"],
+          formAction: ["'none'"],
+        },
+      },
+      referrerPolicy: { policy: 'no-referrer' },
+      crossOriginResourcePolicy: { policy: 'same-site' },
+    }),
+  );
+
   app.enableCors({
     origin: (
       origin: string | undefined,
@@ -26,7 +48,11 @@ async function bootstrap(): Promise<void> {
         return;
       }
 
-      callback(new Error(`Origin ${origin} is not in CORS_ORIGINS`));
+      // `false` denies by omitting the CORS headers, which is what the browser
+      // expects. Throwing here aborts the response at the network layer and
+      // surfaces as an opaque failure with no server-side trace.
+      logger.warn(`Blocked cross-origin request from ${origin}`);
+      callback(null, false);
     },
     credentials: true,
   });
@@ -47,8 +73,6 @@ async function bootstrap(): Promise<void> {
 
   // Render and most other hosts route traffic to $PORT on all interfaces.
   await app.listen(port, '0.0.0.0');
-
-  const logger = new Logger('Bootstrap');
 
   logger.log(`API listening on http://0.0.0.0:${port}/api/v1`);
   logger.log(`Allowed origins: ${corsOrigins.join(', ')}`);

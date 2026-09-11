@@ -22,13 +22,15 @@ export class AdminService {
         roomsDraft,
         paths,
       ] = await Promise.all([
-        tx.profile.count(),
-        tx.profile.count({ where: { role: UserRole.STUDENT } }),
+        // Accounts pending deletion are already gone as far as the platform
+        // is concerned, so they should not inflate the headline counts.
+        tx.profile.count({ where: { deletedAt: null } }),
+        tx.profile.count({ where: { role: UserRole.STUDENT, deletedAt: null } }),
         tx.profile.count({
-          where: { role: UserRole.TEACHER, accountStatus: AccountStatus.ACTIVE },
+          where: { role: UserRole.TEACHER, accountStatus: AccountStatus.ACTIVE, deletedAt: null },
         }),
         tx.profile.count({
-          where: { role: UserRole.TEACHER, accountStatus: AccountStatus.PENDING },
+          where: { role: UserRole.TEACHER, accountStatus: AccountStatus.PENDING, deletedAt: null },
         }),
         tx.classGroup.count(),
         tx.room.count({ where: { status: ContentStatus.PUBLISHED } }),

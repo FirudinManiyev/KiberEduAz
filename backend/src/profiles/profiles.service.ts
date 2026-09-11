@@ -176,7 +176,11 @@ export class ProfilesService {
 
   async listPendingTeachers() {
     return this.prisma.profile.findMany({
-      where: { role: UserRole.TEACHER, accountStatus: AccountStatus.PENDING },
+      where: {
+        role: UserRole.TEACHER,
+        accountStatus: AccountStatus.PENDING,
+        deletedAt: null,
+      },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -192,6 +196,7 @@ export class ProfilesService {
 
   async list() {
     return this.prisma.profile.findMany({
+      where: { deletedAt: null },
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,

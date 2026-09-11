@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { ContentStatus, Prisma, UserRole } from '@prisma/client';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
+import { AccountStatus, ContentStatus, Prisma, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import { percentOf } from './catalog.serializer';
@@ -76,41 +76,108 @@ export class PathsService {
 
   async createPath(user: AuthenticatedUser, dto: UpsertPathDto) {
     return this.prisma.path.create({
-      data: { ...this.pathData(dto), createdById: user.id },
+      data: { ...this.pathData(this.withSafeStatus(user, dto)), createdById: user.id },
     });
   }
 
-  async updatePath(id: string, dto: Partial<UpsertPathDto>) {
-    return this.prisma.path.update({ where: { id }, data: this.pathData(dto) });
+  async updatePath(user: AuthenticatedUser, id: string, dto: Partial<UpsertPathDto>) {
+    await this.assertCanManagePath(user, id);
+
+    return this.prisma.path.update({
+      where: { id },
+      data: this.pathData(this.withSafeStatus(user, dto)),
+    });
   }
 
   async removePath(id: string): Promise<void> {
     await this.prisma.path.delete({ where: { id } });
   }
 
-  async createModule(dto: UpsertModuleDto) {
-    await this.assertPathExists(dto.pathId);
+  async createModule(user: AuthenticatedUser, dto: UpsertModuleDto) {
+    // A teacher may only hang a module off a path they own.
+    await this.assertCanManagePath(user, dto.pathId);
 
-    return this.prisma.learningModule.create({ data: this.moduleData(dto) });
+    return this.prisma.learningModule.create({
+      data: { ...this.moduleData(this.withSafeStatus(user, dto)), createdById: user.id },
+    });
   }
 
-  async updateModule(id: string, dto: Partial<UpsertModuleDto>) {
+  async updateModule(user: AuthenticatedUser, id: string, dto: Partial<UpsertModuleDto>) {
+    await this.assertCanManageModule(user, id);
+
     if (dto.pathId) {
-      await this.assertPathExists(dto.pathId);
+      // Re-parenting is a write to the destination path too.
+      await this.assertCanManagePath(user, dto.pathId);
     }
 
-    return this.prisma.learningModule.update({ where: { id }, data: this.moduleData(dto) });
+    return this.prisma.learningModule.update({
+      where: { id },
+      data: this.moduleData(this.withSafeStatus(user, dto)),
+    });
   }
 
   async removeModule(id: string): Promise<void> {
     await this.prisma.learningModule.delete({ where: { id } });
   }
 
-  private async assertPathExists(pathId: string): Promise<void> {
-    const found = await this.prisma.path.findUnique({ where: { id: pathId }, select: { id: true } });
+  /// Publishing is an admin decision. Teachers draft; `status` is stripped from
+  /// their payloads so PATCH can never stand in for the publish endpoint.
+  private withSafeStatus<T extends { status?: ContentStatus }>(
+    user: AuthenticatedUser,
+    dto: T,
+  ): T {
+    if (user.profile.role === UserRole.ADMIN) return dto;
 
-    if (!found) {
+    return { ...dto, status: undefined };
+  }
+
+  /// Admins manage the whole curriculum; a teacher only what they authored.
+  /// Mirrors ClassesService.assertCanManage. Rows predating the ownership
+  /// column carry createdById = null and stay admin-only.
+  private async assertCanManagePath(user: AuthenticatedUser, pathId: string): Promise<void> {
+    const path = await this.prisma.path.findUnique({
+      where: { id: pathId },
+      select: { createdById: true },
+    });
+
+    if (!path) {
       throw new NotFoundException('Path tapılmadı');
+    }
+
+    if (user.profile.role === UserRole.ADMIN) return;
+
+    this.assertActiveTeacher(user, 'Bu path-i idarə etmək üçün icazən yoxdur');
+
+    if (path.createdById !== user.id) {
+      throw new ForbiddenException('Bu path sənə aid deyil');
+    }
+  }
+
+  private async assertCanManageModule(user: AuthenticatedUser, moduleId: string): Promise<void> {
+    const module = await this.prisma.learningModule.findUnique({
+      where: { id: moduleId },
+      select: { createdById: true },
+    });
+
+    if (!module) {
+      throw new NotFoundException('Modul tapılmadı');
+    }
+
+    if (user.profile.role === UserRole.ADMIN) return;
+
+    this.assertActiveTeacher(user, 'Bu modulu idarə etmək üçün icazən yoxdur');
+
+    if (module.createdById !== user.id) {
+      throw new ForbiddenException('Bu modul sənə aid deyil');
+    }
+  }
+
+  private assertActiveTeacher(user: AuthenticatedUser, message: string): void {
+    if (
+      user.profile.role !== UserRole.TEACHER ||
+      user.profile.accountStatus !== AccountStatus.ACTIVE
+    ) {
+      throw new ForbiddenException(message);
     }
   }
 

@@ -9,8 +9,21 @@ Platforma **“oxu → analiz et → cavablandır → yoxla → xal qazan”** m
 ```text
 KiberEduAz/
 ├── frontend/   # Next.js 16 tətbiqi (App Router, React 19, Tailwind 4)
-└── backend/    # NestJS API (Prisma + Supabase Postgres + Supabase Auth)
+├── backend/    # NestJS API (Prisma + Supabase Postgres + Supabase Auth)
+├── docs/       # Hesabatlar, qərar sənədləri, audit materialları (docs/audits/)
+└── scripts/    # Deploy-dan sonra işlədilən yoxlama skriptləri
 ```
+
+## Branch modeli
+
+| Branch | Rolu |
+|---|---|
+| `main` | Yeganə əsas branch. Render (`render.yaml` → `branch: main`) və Vercel bundan deploy edir. Birbaşa push **olunmur**. |
+| `feature/*`, `fix/*`, `security/*` | Bütün iş bunlarda gedir və `main`-ə **Pull Request** ilə birləşir. |
+
+Niyə PR məcburidir: Render hər commit-də avtomatik deploy edir, amma migration-ları işlətmir (bax "Prisma migration-ları haqqında"). Yeni sütun tələb edən kod migration-dan əvvəl deploy olunsa API bütün sorğularda 500 qaytarır. PR bu iki addımın sırasını qorumaq üçün nəzarət nöqtəsidir: **əvvəl migration, sonra merge.**
+
+Köhnə `backend` və `frontend` branch-ları tarixi qalıqdır — hər ikisi bütün monorepo-nu saxlayırdı və heç nəyi ayırmırdı. `frontend` `main`-in içində tam mövcud olduğu üçün silinib; `backend` GitHub-da default branch `main` edildikdən və Render `main`-ə keçirildikdən sonra silinməlidir.
 
 ## MVP-də nələr var?
 
@@ -126,7 +139,7 @@ Bütün KiberEduAz cədvəllərində RLS aktivdir və heç bir policy yoxdur —
 
 ### ⚠️ Köhnə cədvəllər
 
-Supabase layihəsi əvvəlki turizm layihəsindən 7 cədvəl saxlayır: `User`, `TouristProfile`, `EntrepreneurProfile`, `Place`, `Booking`, `Review`, `CoinTransaction`. Hamısı boşdur, **lakin RLS söndürülüb** — yəni publishable açara sahib hər kəs onları oxuya və dəyişə bilər. KiberEduAz onlardan istifadə etmir; təhlükəsizlik üçün `drop_legacy_tables.sql` skriptini işlət.
+Supabase layihəsi əvvəlki turizm layihəsindən 7 cədvəl saxlayır: `User`, `TouristProfile`, `EntrepreneurProfile`, `Place`, `Booking`, `Review`, `CoinTransaction`. Hamısı boşdur. `20260911000200_rls_legacy_tables` migration-ı onlarda RLS-i yandırıb `anon`/`authenticated` icazələrini geri alır, yəni tətbiq olunandan sonra publishable açarla oxunmurlar. KiberEduAz onlardan istifadə etmir; backup götürdükdən sonra `drop_legacy_tables.sql` ilə tamamilə sil.
 
 ## Deploy
 
@@ -169,6 +182,7 @@ Sıra vacibdir: **əvvəlcə backend deploy olunur → URL alınır → Vercel-�
 
 | Dəyişən | Dəyər |
 |---|---|
+| `NEXT_PUBLIC_SITE_URL` | **Məcburidir.** Saytın public origin-i, sonda `/` olmadan, məsələn `https://kiberedu.vercel.app`. Bütün auth e-poçtları (təsdiq, parol sıfırlama) linkini bundan qurur və `/auth/callback` yönləndirməni buna bağlayır. Production build bu dəyişən olmadan **qəsdən xəta verir** — `localhost`-a səssiz düşməkdənsə. |
 | `NEXT_PUBLIC_API_URL` | Render URL-i + prefiks, məsələn `https://kiberedu-api.onrender.com/api/v1` |
 | `NEXT_PUBLIC_SUPABASE_URL` | `https://okyhjpywngmportlzmxo.supabase.co` |
 | `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key (açıq paylaşıla bilər) |
@@ -183,7 +197,7 @@ Render → `kiberedu-api` → **Environment** → `CORS_ORIGINS` dəyərini Verc
 https://kiberedu.vercel.app,*-<vercel-team-slug>.vercel.app
 ```
 
-Vergüllə ayrılan siyahıdır. `*` ilə başlayan sətir hostname **sonluğu** kimi işləyir. Vercel-in preview domenləri `<layihə>-<hash>-<team-slug>.vercel.app` formasındadır, ona görə ikinci dəyər yalnız sənin komandanın preview deploy-larına icazə verir — `vercel.app`-dəki hər layihəyə deyil. Team slug-ı Vercel-dəki hər hansı preview URL-inin sonundan götür. Preview lazım deyilsə yalnız birinci dəyəri saxla.
+Vergüllə ayrılan siyahıdır. `*` ilə başlayan sətir hostname **sonluğu** kimi işləyir; tək `*` isə **heç nəyə uyğun gəlmir** — `credentials: true` ilə o, internetdəki hər sayta autentifikasiyalı sorğu icazəsi verərdi. Vercel-in preview domenləri `<layihə>-<hash>-<team-slug>.vercel.app` formasındadır, ona görə ikinci dəyər yalnız sənin komandanın preview deploy-larına icazə verir — `vercel.app`-dəki hər layihəyə deyil. Team slug-ı Vercel-dəki hər hansı preview URL-inin sonundan götür. Preview lazım deyilsə yalnız birinci dəyəri saxla.
 
 Supabase Auth tərəfində də domeni əlavə etmək lazımdır: **Authentication → URL Configuration** → Site URL və Redirect URLs.
 
@@ -199,6 +213,24 @@ npm run prisma:baseline     # mövcud init migration-ı "tətbiq edilmiş" kimi 
 ```
 
 Bundan sonra `render.yaml`-daki `buildCommand`-a `&& npm run prisma:deploy` əlavə edə bilərsən.
+
+#### 2026-09 təhlükəsizlik migration-ları
+
+Baseline-dan sonra `npx prisma migrate deploy` bu dördünü timestamp sırası ilə tətbiq edir. Sıra vacibdir və 3-cü uğursuz ola bilər:
+
+| # | Migration | Nə edir | Risk |
+|---|---|---|---|
+| 0 | `prisma/manual/find_duplicate_correct_attempts.sql` | **Əvvəlcə əl ilə, yalnız oxu.** Eyni suala təkrar düzgün cavab və təkrar room bonusu qeydlərini tapır. | 2-ci sorğu `0`-dan başqa nəsə qaytarırsa **dayan** — 3-cü migration uğursuz olacaq. Skript heç nə silmir. |
+| 1 | `20260911000000_module_ownership` | `learning_modules.created_by_id` (nullable). Köhnə sətirlər yalnız admin-ə aiddir. | Yoxdur |
+| 2 | `20260911000200_rls_legacy_tables` | Köhnə cədvəllərdə RLS + revoke. | Yoxdur, təkrar işlədilə bilər |
+| 3 | `20260911000100_answer_attempt_idempotency` | Xal ödənişini idempotent edən iki partial unique index. | Dublikat varsa uğursuz olur və geri qayıdır |
+| 4 | `20260911000300_account_deletion` | `profiles.deleted_at` + partial index. | Yoxdur |
+
+⚠️ Prisma partial index-ləri görmür: gələcək `prisma migrate dev` 3 və 4-dəki index-ləri silməyi təklif edəcək — **icazə vermə**. Hər iki modeldə bunu deyən `///` şərh var.
+
+Migration-lar tətbiq olunmadan bu kodu deploy etmə: `JwtAuthGuard` profil sətrinin hamısını oxuyur, `deleted_at` sütunu olmayan bazada isə **hər autentifikasiyalı sorğu** 500 verir.
+
+Tam siyahı və əl ilə görüləcək addımlar: `docs/security-remediation-2026-09.md`. Deploy-dan sonra `scripts/security-smoke.sh` ilə audit PoC-larının 403 qaytardığını yoxla.
 
 ### Pulsuz plan məhdudiyyətləri
 

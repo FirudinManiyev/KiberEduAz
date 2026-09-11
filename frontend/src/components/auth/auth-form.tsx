@@ -21,6 +21,7 @@ import type { MyProfile } from "@/lib/api/types";
 import { authPendingLabel, type AuthMode } from "@/lib/auth/copy";
 import { homePathFor } from "@/lib/auth/home-path";
 import { toUserErrorMessage } from "@/lib/errors/user-error";
+import { getAuthCallbackUrl, safeRelativePath } from "@/lib/site-url";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 const COPY = {
@@ -58,8 +59,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextParam = searchParams.get("next");
-  const nextPath =
-    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : null;
+  const nextPath = safeRelativePath(nextParam);
   const switchHref = nextPath
     ? `${copy.switchHref}?next=${encodeURIComponent(nextPath)}`
     : copy.switchHref;
@@ -97,9 +97,11 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/auth/callback${
-              nextPath ? `?next=${encodeURIComponent(nextPath)}` : ""
-            }`,
+            // Pinned to NEXT_PUBLIC_SITE_URL: window.location.origin sends
+            // the confirmation mail to whatever host the visitor signed up
+            // from, which is how production mails ended up linking to
+            // localhost.
+            emailRedirectTo: getAuthCallbackUrl(nextPath),
             data: {
               full_name: fullName,
               ...(mode === "register-teacher"
