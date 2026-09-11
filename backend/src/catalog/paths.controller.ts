@@ -33,8 +33,12 @@ export class PathsController {
 
   @Patch(':id')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpsertPathDto) {
-    return this.pathsService.updatePath(id, dto);
+  update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpsertPathDto,
+  ) {
+    return this.pathsService.updatePath(user, id, dto);
   }
 
   @Delete(':id')
@@ -51,14 +55,18 @@ export class ModulesController {
 
   @Post()
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
-  create(@Body() dto: UpsertModuleDto) {
-    return this.pathsService.createModule(dto);
+  create(@CurrentUser() user: AuthenticatedUser, @Body() dto: UpsertModuleDto) {
+    return this.pathsService.createModule(user, dto);
   }
 
   @Patch(':id')
   @Roles(UserRole.TEACHER, UserRole.ADMIN)
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() dto: UpsertModuleDto) {
-    return this.pathsService.updateModule(id, dto);
+  update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpsertModuleDto,
+  ) {
+    return this.pathsService.updateModule(user, id, dto);
   }
 
   @Delete(':id')

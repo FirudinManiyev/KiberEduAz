@@ -146,6 +146,7 @@ model Profile {
   memberships    ClassMembership[]
   taughtClasses  ClassGroup[]      @relation("ClassTeacher")
   createdPaths   Path[]
+  createdModules LearningModule[]
   createdRooms   Room[]
   roomProgress   RoomProgress[]
   taskProgress   TaskProgress[]
@@ -203,14 +204,17 @@ model LearningModule {
   description String        @default("")
   status      ContentStatus @default(DRAFT)
   orderIndex  Int           @default(0) @map("order_index")
+  createdById String?       @map("created_by_id") @db.Uuid
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
 
-  path  Path   @relation(fields: [pathId], references: [id], onDelete: Cascade)
-  rooms Room[]
+  path      Path     @relation(fields: [pathId], references: [id], onDelete: Cascade)
+  createdBy Profile? @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  rooms     Room[]
 
   @@unique([pathId, slug])
   @@index([pathId, orderIndex])
+  @@index([createdById])
   @@map("learning_modules")
 }
 
