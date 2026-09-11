@@ -36,7 +36,8 @@ export class LeaderboardService {
     }
 
     const profiles = await this.prisma.profile.findMany({
-      where,
+      // A pending deletion leaves the board immediately, not at purge time.
+      where: { ...where, deletedAt: null },
       include: { stats: true },
     });
 

@@ -37,6 +37,12 @@ export class JwtAuthGuard implements CanActivate {
     const claims = await this.tokenService.verify(token);
     const profile = await this.resolveProfile(claims.sub, claims.email ?? '');
 
+    // A deletion request takes effect here rather than at purge time: the rows
+    // survive the restore window, but the account stops working immediately.
+    if (profile.deletedAt) {
+      throw new UnauthorizedException('Bu hesab silinib');
+    }
+
     (request as Request & { user: AuthenticatedUser }).user = {
       id: profile.id,
       email: profile.email,

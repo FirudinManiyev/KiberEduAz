@@ -141,6 +141,11 @@ model Profile {
   notifyLeaderboard  Boolean       @default(false) @map("notify_leaderboard")
   createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt          DateTime      @default(now()) @map("updated_at") @db.Timestamptz(6)
+  /// Set by DELETE /profiles/me. A marked account stops authenticating at
+  /// once and is purged after the restore window. The supporting index is
+  /// partial (WHERE deleted_at IS NOT NULL) and lives in migration
+  /// 20260911000300_account_deletion.
+  deletedAt          DateTime?     @map("deleted_at") @db.Timestamptz(6)
 
   organization   Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
   memberships    ClassMembership[]
