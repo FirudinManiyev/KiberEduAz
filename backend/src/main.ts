@@ -1,6 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
 import { isAllowedOrigin } from './common/cors';
@@ -8,12 +9,19 @@ import { PrismaExceptionFilter } from './common/prisma-exception.filter';
 import type { AppConfig } from './config/configuration';
 
 async function bootstrap(): Promise<void> {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
   const config = app.get(ConfigService);
 
   const corsOrigins = config.getOrThrow<string[]>('corsOrigins');
 
   const logger = new Logger('Bootstrap');
+
+  // Render terminates TLS and forwards the client address in X-Forwarded-For.
+  // Without this Express reports the proxy's own IP for every request, so the
+  // throttler puts the whole user base into one bucket: 120 legitimate
+  // requests a minute from anybody locks everybody out, and the per-route
+  // limits stop meaning "per client" at all. `1` trusts exactly one hop.
+  app.set('trust proxy', 1);
 
   app.setGlobalPrefix('api/v1');
 
