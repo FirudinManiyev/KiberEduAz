@@ -50,25 +50,18 @@ must also go, that is a product decision with a different implementation
 
 ## Scheduling the purge
 
-The endpoint is deliberately a plain authenticated POST so it can be driven
-from outside, and no scheduler is baked into the API process. In rough order of
-effort:
+Done in-process: `AccountDeletionService.purgeExpiredOnSchedule` runs every day
+at 03:00 server time via `@nestjs/schedule` (`ScheduleModule.forRoot()` is
+registered in `ProfilesModule`). No admin token has to live in an external cron,
+and because the purge is idempotent a second instance firing the same tick
+finds nothing left to do.
 
-1. **Render Cron Job** (simplest). Add a second service to `render.yaml` with
-   `type: cron`, `schedule: "0 3 * * *"`, running a one-line `curl` against
-   `POST /api/v1/admin/profiles/purge-expired` with an admin token. Needs a
-   long-lived admin credential, which is the main drawback.
-2. **GitHub Actions scheduled workflow** — same call, token in repository
-   secrets. No extra Render service.
-3. **In-process `@nestjs/schedule`** — a `@Cron` decorator calling
-   `AccountDeletionService.purgeExpired()` directly, so no token is needed at
-   all. Adds a dependency, and on a multi-instance deploy every instance fires;
-   harmless here because the purge is idempotent, and Render's free plan runs a
-   single instance anyway.
+`POST /api/v1/admin/profiles/purge-expired` stays available for running it by
+hand - after a support request, or to verify the job on a fresh deploy.
 
-Option 3 is the cleanest if the extra dependency is acceptable. Until one of
-these is wired up, the purge only happens when an admin calls it, and deleted
-accounts simply stay marked and inert — which is safe, just not complete.
+Every purge and every restore is also written to the audit log
+(`audit_log`, see `docs/audit-log.md`), so "when did this account actually go"
+has an answer.
 
 ## Configuration
 

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
 import type { AppConfig } from '../config/configuration';
@@ -65,6 +66,28 @@ export class AccountDeletionService {
     this.logger.log(`Account ${profileId} restored`);
 
     return { restored: true };
+  }
+
+  /// Nightly at 03:00 server time. In-process so no admin token has to live
+  /// in a cron job; idempotent, so if the free plan ever runs two instances
+  /// the second pass simply finds nothing due. The admin endpoint remains for
+  /// running it by hand.
+  @Cron(CronExpression.EVERY_DAY_AT_3AM, { name: 'purge-deleted-accounts' })
+  async purgeExpiredOnSchedule(): Promise<void> {
+    try {
+      const result = await this.purgeExpired();
+
+      if (result.due > 0) {
+        this.logger.log(
+          `Scheduled purge: ${result.purged}/${result.due} accounts removed, ${result.failed.length} failed`,
+        );
+      }
+    } catch (error) {
+      // A scheduler tick must never take the process down.
+      this.logger.error(
+        `Scheduled purge crashed: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
   }
 
   /// Step two, run on a schedule: hard-delete everything whose restore window
