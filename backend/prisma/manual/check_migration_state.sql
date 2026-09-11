@@ -25,7 +25,7 @@ from (
       'Path/module ownership checks -> 500 on teacher curriculum edits'
     ),
     (
-      '2. answer_attempts partial unique index  (20260911000100)',
+      '2. answer_attempts partial unique index  (20260911000500)',
       exists (
         select 1 from pg_indexes
         where schemaname = 'public'
@@ -34,7 +34,7 @@ from (
       'Points race stays open (no 500; just the F-04 bug)'
     ),
     (
-      '3. points_ledger ROOM_COMPLETED unique index  (20260911000100)',
+      '3. points_ledger ROOM_COMPLETED unique index  (20260911000500)',
       exists (
         select 1 from pg_indexes
         where schemaname = 'public'

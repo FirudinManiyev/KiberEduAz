@@ -1,4 +1,4 @@
--- Pre-flight for migration 20260911000100_answer_attempt_idempotency.
+-- Pre-flight for migration 20260911000500_answer_attempt_idempotency.
 --
 -- That migration creates a UNIQUE INDEX on (profile_id, question_id) WHERE
 -- is_correct, which is what makes the points payout idempotent. If any learner

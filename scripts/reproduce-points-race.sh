@@ -5,7 +5,7 @@
 # A real concurrency test needs a live Postgres, so this is a script rather
 # than a unit test: it fires N simultaneous *correct* submissions for the same
 # question and checks that the learner's point total moved by one payout, not
-# N. Before migration 20260911000100 this over-pays; after it, the partial
+# N. Before migration 20260911000500 this over-pays; after it, the partial
 # unique index makes every loser a no-op.
 #
 # Usage:
@@ -76,7 +76,7 @@ if [ "${paid}" -le 1 ]; then
 fi
 
 echo "FAIL: ${paid} submissions were each paid - the race is still open."
-echo "Check that migration 20260911000100_answer_attempt_idempotency is applied:"
+echo "Check that migration 20260911000500_answer_attempt_idempotency is applied:"
 echo "  select indexname from pg_indexes"
 echo "   where indexname = 'answer_attempts_profile_question_correct_key';"
 exit 1
