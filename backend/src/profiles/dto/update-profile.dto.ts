@@ -22,7 +22,11 @@ export class UpdateProfileDto {
   })
   username?: string;
 
-  @IsOptional() @IsString() @MaxLength(40) avatarKey?: string;
+  // The frontend maps this to a fixed set of avatars, so anything outside a
+  // short lowercase token is noise at best and a stored payload at worst.
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9-]{0,39}$/, { message: 'Avatar açarı etibarsızdır' })
+  avatarKey?: string;
   @IsOptional() @IsString() @MaxLength(600) bio?: string;
   @IsOptional() @IsString() @MaxLength(160) institutionName?: string;
   @IsOptional() @IsString() @MaxLength(80) classLabel?: string;
