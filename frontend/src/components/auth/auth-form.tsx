@@ -21,6 +21,7 @@ import type { MyProfile } from "@/lib/api/types";
 import { authPendingLabel, type AuthMode } from "@/lib/auth/copy";
 import { homePathFor } from "@/lib/auth/home-path";
 import { toUserErrorMessage } from "@/lib/errors/user-error";
+import { ResendConfirmation } from "@/components/auth/resend-confirmation";
 import { getAuthCallbackUrl, safeRelativePath } from "@/lib/site-url";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
@@ -70,12 +71,16 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  // Set whenever the account exists but its address is not confirmed yet, so
+  // the visitor is offered a new link instead of being told to wait.
+  const [unconfirmedEmail, setUnconfirmedEmail] = useState<string | null>(null);
   const shownError = error ?? (linkError ? translateLinkError(linkError) : null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setNotice(null);
+    setUnconfirmedEmail(null);
     setPending(true);
 
     const form = new FormData(event.currentTarget);
@@ -119,6 +124,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
               ? "Təsdiq linki e-poçtuna göndərildi. Təsdiqdən sonra daxil ol — müəllim müraciətin adminə gedəcək."
               : "Təsdiq linki e-poçtuna göndərildi. Linki açdıqdan sonra daxil ola bilərsən.";
           setNotice(noticeMessage);
+          setUnconfirmedEmail(email);
           toast.success("Təsdiq linki göndərildi", {
             id: toastId,
             description: "Davam etmək üçün e-poçt qutunu yoxla.",
@@ -171,6 +177,15 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       });
       router.refresh();
     } catch (cause) {
+      const raw = cause instanceof Error ? cause.message : String(cause);
+
+      // Signing in before confirming is the other way to end up needing a new
+      // link, and the only moment we can be sure the address is genuinely
+      // registered but unconfirmed.
+      if (/email not confirmed|confirm.*email/i.test(raw) && email) {
+        setUnconfirmedEmail(email);
+      }
+
       const message = toUserErrorMessage(
         cause,
         mode === "login" ? "Hesaba daxil olmaq mümkün olmadı" : "Hesab yaratmaq mümkün olmadı",
@@ -317,6 +332,10 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
                 </p>
               )}
 
+              {unconfirmedEmail && (
+                <ResendConfirmation email={unconfirmedEmail} next={nextPath} />
+              )}
+
               <button
                 type="submit"
                 disabled={pending}
@@ -405,7 +424,9 @@ function translateLinkError(reason: string): string {
     return "Təsdiq linki natamamdır. Aşağıdan yenidən daxil olmağa çalış.";
   }
   if (reason === "expired-link" || /expired/i.test(reason)) {
-    return "Təsdiq linkinin vaxtı bitib. Yenidən qeydiyyatdan keçib yeni link istə.";
+    // A new link is one sign-in attempt away now, so send them there rather
+    // than telling them to register again.
+    return "Təsdiq linkinin vaxtı bitib. Aşağıda e-poçt və şifrəni yazıb daxil ol — yeni link göndərmə düyməsi görünəcək.";
   }
   if (reason === "used-link" || /already|used/i.test(reason)) {
     return "Bu link artıq istifadə olunub. Sadəcə daxil ol.";
