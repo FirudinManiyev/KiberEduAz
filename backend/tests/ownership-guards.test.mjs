@@ -16,6 +16,8 @@ const PATH_OF_B = "bbbbbbbb-0000-0000-0000-000000000002";
 const MODULE_OF_A = "aaaaaaaa-0000-0000-0000-000000000003";
 const MODULE_OF_B = "bbbbbbbb-0000-0000-0000-000000000003";
 
+const PUBLISHED_PATH = "cccccccc-0000-0000-0000-000000000002";
+
 const TASK_IN_A = "aaaaaaaa-0000-0000-0000-000000000004";
 const TASK_IN_B = "bbbbbbbb-0000-0000-0000-000000000004";
 
@@ -36,8 +38,9 @@ function fakePrisma(overrides = {}) {
     [ROOM_OF_B]: { id: ROOM_OF_B, createdById: TEACHER_B },
   };
   const paths = {
-    [PATH_OF_A]: { id: PATH_OF_A, createdById: TEACHER_A },
-    [PATH_OF_B]: { id: PATH_OF_B, createdById: TEACHER_B },
+    [PATH_OF_A]: { id: PATH_OF_A, createdById: TEACHER_A, status: "DRAFT" },
+    [PATH_OF_B]: { id: PATH_OF_B, createdById: TEACHER_B, status: "DRAFT" },
+    [PUBLISHED_PATH]: { id: PUBLISHED_PATH, createdById: ADMIN, status: "PUBLISHED" },
   };
   const modules = {
     [MODULE_OF_A]: { id: MODULE_OF_A, createdById: TEACHER_A },
@@ -230,7 +233,7 @@ test("teacher A can update their own path and module", async () => {
   );
 });
 
-test("teacher A cannot create a module under teacher B's path", async () => {
+test("teacher A cannot create a module under teacher B's unpublished path", async () => {
   const prisma = fakePrisma();
   const paths = new PathsService(prisma, fakeAudit());
 
@@ -243,7 +246,35 @@ test("teacher A cannot create a module under teacher B's path", async () => {
   assert.deepEqual(prisma.writes, []);
 });
 
-test("a teacher cannot re-parent their module onto somebody else's path", async () => {
+test("any teacher can add a module to a PUBLISHED path they do not own", async () => {
+  // Curriculum paths are generally admin-authored. Requiring ownership here
+  // would leave a teacher able to build only under paths they created
+  // themselves, which is no workflow at all.
+  const prisma = fakePrisma();
+  const paths = new PathsService(prisma, fakeAudit());
+
+  assert.equal(
+    await statusOf(
+      paths.createModule(teacher(TEACHER_A), { pathId: PUBLISHED_PATH, slug: "s", title: "t" }),
+    ),
+    200,
+  );
+  assert.equal(prisma.writes.at(-1)[1].data.createdById, TEACHER_A);
+});
+
+test("a teacher can re-parent their module onto a published path", async () => {
+  const prisma = fakePrisma();
+  const paths = new PathsService(prisma, fakeAudit());
+
+  assert.equal(
+    await statusOf(
+      paths.updateModule(teacher(TEACHER_A), MODULE_OF_A, { pathId: PUBLISHED_PATH }),
+    ),
+    200,
+  );
+});
+
+test("a teacher cannot re-parent their module onto somebody else's DRAFT path", async () => {
   const prisma = fakePrisma();
   const paths = new PathsService(prisma, fakeAudit());
 

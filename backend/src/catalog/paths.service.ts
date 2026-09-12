@@ -108,8 +108,7 @@ export class PathsService {
   }
 
   async createModule(user: AuthenticatedUser, dto: UpsertModuleDto) {
-    // A teacher may only hang a module off a path they own.
-    await this.assertCanManagePath(user, dto.pathId);
+    await this.assertCanAttachToPath(user, dto.pathId);
 
     return this.prisma.learningModule.create({
       data: { ...this.moduleData(this.withSafeStatus(user, dto)), createdById: user.id },
@@ -120,8 +119,8 @@ export class PathsService {
     await this.assertCanManageModule(user, id);
 
     if (dto.pathId) {
-      // Re-parenting is a write to the destination path too.
-      await this.assertCanManagePath(user, dto.pathId);
+      // Re-parenting writes to the destination path too.
+      await this.assertCanAttachToPath(user, dto.pathId);
     }
 
     return this.prisma.learningModule.update({
@@ -167,6 +166,31 @@ export class PathsService {
     if (user.profile.role === UserRole.ADMIN) return dto;
 
     return { ...dto, status: undefined };
+  }
+
+  /// Adding a module is not the same as owning the path. Curriculum paths are
+  /// generally admin-authored, so requiring ownership here would leave a
+  /// teacher unable to publish anything at all - they could only ever build
+  /// under a path they had created themselves. A published path is public
+  /// structure and open to contributions; an unpublished one is somebody's
+  /// unreviewed draft and is not. Same rule RoomsService applies to modules.
+  private async assertCanAttachToPath(user: AuthenticatedUser, pathId: string): Promise<void> {
+    const path = await this.prisma.path.findUnique({
+      where: { id: pathId },
+      select: { status: true, createdById: true },
+    });
+
+    if (!path) {
+      throw new NotFoundException('Path tapılmadı');
+    }
+
+    if (user.profile.role === UserRole.ADMIN) return;
+
+    this.assertActiveTeacher(user, 'Bu path-ə modul əlavə etmək üçün icazən yoxdur');
+
+    if (path.status !== ContentStatus.PUBLISHED && path.createdById !== user.id) {
+      throw new ForbiddenException('Bu path sənə aid deyil');
+    }
   }
 
   /// Admins manage the whole curriculum; a teacher only what they authored.
