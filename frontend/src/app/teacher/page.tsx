@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { TeacherConsole } from "@/components/teacher/teacher-console";
-import { apiFetch, apiFetchOrNull } from "@/lib/api/server";
-import type { ClassSummary, MyProfile, PathTreeNode, RoomSummary } from "@/lib/api/types";
+import { apiFetch } from "@/lib/api/server";
+import { requireProfile } from "@/lib/api/viewer";
+import type { ClassSummary, PathTreeNode, RoomSummary } from "@/lib/api/types";
 import { homePathFor } from "@/lib/auth/home-path";
 
 export const metadata: Metadata = {
@@ -11,9 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TeacherPage() {
-  const profile = await apiFetchOrNull<MyProfile>("/profiles/me");
-
-  if (!profile) redirect("/login?next=/teacher");
+  const profile = await requireProfile("/teacher");
 
   if (profile.role !== "TEACHER" || profile.accountStatus !== "ACTIVE") {
     redirect(homePathFor(profile));

@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { AdminConsole } from "@/components/admin/admin-console";
-import { apiFetch, apiFetchOrNull } from "@/lib/api/server";
+import { apiFetch } from "@/lib/api/server";
+import { requireProfile } from "@/lib/api/viewer";
 import type {
   AdminStats,
   AdminUserRow,
   ClassSummary,
-  MyProfile,
   PendingRoom,
   PendingTeacher,
 } from "@/lib/api/types";
@@ -18,9 +18,8 @@ export const metadata: Metadata = {
 };
 
 export default async function AdminPage() {
-  const profile = await apiFetchOrNull<MyProfile>("/profiles/me");
+  const profile = await requireProfile("/admin");
 
-  if (!profile) redirect("/login?next=/admin");
   if (profile.role !== "ADMIN") redirect(homePathFor(profile));
 
   const [stats, pendingTeachers, pendingRooms, users, classes] = await Promise.all([

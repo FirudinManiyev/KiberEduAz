@@ -3,8 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Clock3, ShieldAlert } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
-import { apiFetchOrNull } from "@/lib/api/server";
-import type { MyProfile } from "@/lib/api/types";
+import { requireProfile } from "@/lib/api/viewer";
 import { homePathFor } from "@/lib/auth/home-path";
 
 export const metadata: Metadata = {
@@ -13,9 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function PendingPage() {
-  const profile = await apiFetchOrNull<MyProfile>("/profiles/me");
-
-  if (!profile) redirect("/login?next=/pending");
+  const profile = await requireProfile("/pending");
 
   if (!(profile.role === "TEACHER" && profile.accountStatus !== "ACTIVE")) {
     redirect(homePathFor(profile));

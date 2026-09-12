@@ -26,9 +26,9 @@ import { CommandConsole } from "@/components/home/command-console";
 import { ProgressiveRoomRoadmap } from "@/components/home/progressive-room-roadmap";
 import { RoomCard } from "@/components/room/room-card";
 import { apiFetch, apiFetchOrNull } from "@/lib/api/server";
+import { requireProfile } from "@/lib/api/viewer";
 import type {
   Leaderboard,
-  MyProfile,
   NotificationFeed,
   ProgressSummary,
   RoomSummary,
@@ -45,10 +45,7 @@ export const metadata: Metadata = {
 };
 
 export default async function DashboardPage() {
-  const profile = await apiFetchOrNull<MyProfile>("/profiles/me");
-
-  if (!profile) redirect("/login?next=/dashboard");
-
+  const profile = await requireProfile("/dashboard");
   const home = homePathFor(profile);
 
   if (home !== "/dashboard") redirect(home);
