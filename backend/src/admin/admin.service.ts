@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { AccountStatus, ContentStatus, UserRole } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import type { AuthenticatedUser } from '../auth/auth.types';
+import { NotificationsService } from '../notifications/notifications.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { ProfilesService } from '../profiles/profiles.service';
 
@@ -11,6 +12,7 @@ export class AdminService {
     private readonly prisma: PrismaService,
     private readonly profilesService: ProfilesService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   stats() {
@@ -68,6 +70,13 @@ export class AdminService {
       targetId: id,
     });
 
+    await this.notifications.notify(id, {
+      type: 'SYSTEM',
+      title: 'Müəllim müraciətin təsdiqləndi',
+      body: 'Artıq müəllim panelindən Room və sinif yarada bilərsən.',
+      href: '/teacher',
+    });
+
     return result;
   }
 
@@ -79,6 +88,12 @@ export class AdminService {
       action: 'teacher.reject',
       targetType: 'profile',
       targetId: id,
+    });
+
+    await this.notifications.notify(id, {
+      type: 'SYSTEM',
+      title: 'Müəllim müraciətin rədd edildi',
+      body: 'Suallar üçün platforma administratoru ilə əlaqə saxla.',
     });
 
     return result;
@@ -115,7 +130,7 @@ export class AdminService {
       metadata: { slug: room.slug },
     });
 
-    return this.prisma.room.update({
+    const updated = await this.prisma.room.update({
       where: { id },
       data: {
         status: ContentStatus.PUBLISHED,
@@ -127,8 +142,24 @@ export class AdminService {
         title: true,
         status: true,
         publishedAt: true,
+        createdById: true,
       },
     });
+
+    if (updated.createdById) {
+      await this.notifications.notify(updated.createdById, {
+        type: 'ACHIEVEMENT',
+        title: `"${updated.title}" dərc olundu`,
+        body: 'Room artıq şagirdlərə görünür.',
+        href: `/rooms/${updated.slug}`,
+      });
+    }
+
+    // Fire-and-forget: a slow or failed announcement must never hold up the
+    // admin's publish action.
+    void this.notifications.announceRoom(updated);
+
+    return updated;
   }
 
   async rejectRoom(actor: AuthenticatedUser, id: string) {
@@ -144,10 +175,20 @@ export class AdminService {
       metadata: { slug: room.slug },
     });
 
-    return this.prisma.room.update({
+    const updated = await this.prisma.room.update({
       where: { id },
       data: { status: ContentStatus.ARCHIVED },
-      select: { id: true, slug: true, title: true, status: true },
+      select: { id: true, slug: true, title: true, status: true, createdById: true },
     });
+
+    if (updated.createdById) {
+      await this.notifications.notify(updated.createdById, {
+        type: 'SYSTEM',
+        title: `"${updated.title}" rədd edildi`,
+        body: 'Dəyişiklik edib yenidən təqdim edə bilərsən.',
+      });
+    }
+
+    return updated;
   }
 }
