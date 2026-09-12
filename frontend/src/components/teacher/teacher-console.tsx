@@ -174,9 +174,13 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
       });
       event.currentTarget.reset();
       await refreshRooms();
-      setMessage("Room yaradıldı (DRAFT). Admin təsdiqindən sonra şagirdlərə açılacaq.");
+      // A new room is an empty shell; the next step is the content editor,
+      // which is one click away in the list below.
+      setMessage(
+        'Room yaradıldı (DRAFT). İndi aşağıdakı siyahıdan "Məzmunu redaktə et" ilə task və sual əlavə et — boş Room dərc oluna bilməz.',
+      );
       toast.success("Room yaradıldı", {
-        description: "Admin təsdiqindən sonra öyrənənlərə açılacaq.",
+        description: "Növbəti addım: məzmunu doldur, sonra admin təsdiqi.",
       });
     } catch (cause) {
       const message = toUserErrorMessage(cause, "Room yaradıla bilmədi");
@@ -441,7 +445,16 @@ export function TeacherConsole({ profile, initialPaths, initialRooms, initialCla
               </div>
               <div className="flex items-center gap-2">
                 <StatusPill status={room.status} />
-                <Link href={`/rooms/${room.slug}`} className="text-xs font-semibold text-emerald-300 hover:underline">
+                <Link
+                  href={`/teacher/rooms/${room.id}`}
+                  className="rounded-lg border border-emerald-300/25 px-2.5 py-1.5 text-xs font-semibold text-emerald-300 transition-colors hover:border-emerald-300/50 hover:bg-emerald-300/[0.07]"
+                >
+                  Məzmunu redaktə et
+                </Link>
+                <Link
+                  href={`/rooms/${room.slug}`}
+                  className="text-xs font-semibold text-slate-400 hover:text-slate-200 hover:underline"
+                >
                   Bax
                 </Link>
               </div>

@@ -310,3 +310,83 @@ export interface PathTreeNode {
     }[];
   }[];
 }
+
+// ---------------------------------------------------------------------------
+// Author-facing content shapes
+//
+// GET /rooms/:id/edit returns the answer key, so these are only ever fetched
+// for a room the caller owns (or as an admin). They mirror the backend's
+// toRoomDetailForAuthor serializer and the Upsert* DTOs it accepts back.
+// ---------------------------------------------------------------------------
+
+export interface AuthorQuestionOption {
+  id: string;
+  orderIndex: number;
+  label: string;
+  isCorrect: boolean;
+}
+
+export interface AuthorQuestion {
+  id: string;
+  orderIndex: number;
+  type: QuestionType;
+  prompt: string;
+  explanation: string;
+  points: number;
+  acceptedAnswers: string[];
+  options: AuthorQuestionOption[];
+}
+
+export interface AuthorTask {
+  id: string;
+  orderIndex: number;
+  title: string;
+  durationLabel: string;
+  points: number;
+  sections: LessonSection[];
+  questions: AuthorQuestion[];
+}
+
+export interface RoomDetailForAuthor {
+  id: string;
+  slug: string;
+  title: string;
+  shortTitle: string;
+  eyebrow: string;
+  description: string;
+  category: string;
+  type: RoomType;
+  difficulty: Difficulty;
+  durationLabel: string;
+  points: number;
+  accent: ContentAccent;
+  objectives: string[];
+  sourceFile: string | null;
+  status: ContentStatus;
+  orderIndex: number;
+  publishedAt: string | null;
+  moduleId: string;
+  path: { id: string; slug: string; title: string };
+  module: { id: string; slug: string; title: string };
+  tasks: AuthorTask[];
+}
+
+/// Request body for POST /rooms/:id/tasks and PATCH /rooms/:id/tasks/:taskId.
+/// Questions are replaced wholesale when present, so a task is always sent
+/// complete.
+export interface UpsertTaskBody {
+  title: string;
+  durationLabel?: string;
+  points?: number;
+  orderIndex?: number;
+  sections?: LessonSection[];
+  questions?: {
+    type?: QuestionType;
+    prompt: string;
+    explanation?: string;
+    points?: number;
+    orderIndex?: number;
+    acceptedAnswers?: string[];
+    options?: { label: string; isCorrect: boolean }[];
+  }[];
+}
